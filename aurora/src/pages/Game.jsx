@@ -62,6 +62,7 @@ const Game = ({ onExitToMenu }) => {
     resetGame,
     modulesBuilt,
     addModule,
+    removeModule,
     phase,
     startSimulation,
     selectedPlanet,
@@ -199,6 +200,29 @@ const Game = ({ onExitToMenu }) => {
       text: `${created.name} deployed. ${created.role}.`,
     })
     triggerTone(module.tone ?? 440)
+  }
+
+  const handleRemoveModule = (instanceId) => {
+    if (!constructionPhase) {
+      return
+    }
+
+    const removed = removeModule(instanceId)
+    if (!removed) {
+      return
+    }
+
+    if (recentModuleId === instanceId) {
+      setRecentModuleId(null)
+    }
+
+    setFeedback({
+      id: `${instanceId}-removed`,
+      type: 'module',
+      text: `${removed.name} removed from the habitat.`,
+    })
+
+    triggerTone(220)
   }
 
   const handleStartSimulation = () => {
@@ -456,8 +480,23 @@ const Game = ({ onExitToMenu }) => {
                     .filter(Boolean)
                     .join(' ')
 
+                  const editable = constructionPhase
+                  const moduleClassName = editable
+                    ? `${cardClassNames} habitat-grid__module--editable`
+                    : cardClassNames
+
                   return (
-                    <article key={module.instanceId} className={cardClassNames} tabIndex={0}>
+                    <article key={module.instanceId} className={moduleClassName} tabIndex={0}>
+                      {editable && (
+                        <button
+                          type="button"
+                          className="habitat-grid__remove"
+                          onClick={() => handleRemoveModule(module.instanceId)}
+                          aria-label={`Remove ${module.name}`}
+                        >
+                          ×
+                        </button>
+                      )}
                       <div className="habitat-grid__summary">
                         <span className="habitat-grid__icon" aria-hidden="true">
                           {resolveIcon(module.id)}

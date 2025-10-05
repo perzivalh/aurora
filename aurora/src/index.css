@@ -562,6 +562,10 @@ button:active:not(:disabled) {
   transition: border-color 150ms ease, box-shadow 200ms ease;
 }
 
+.habitat-grid__module--editable {
+  padding-top: 2.2rem;
+}
+
 .habitat-grid__module--recent {
   box-shadow: 0 0 0 2px rgba(17, 138, 178, 0.65);
 }
@@ -611,6 +615,35 @@ button:active:not(:disabled) {
   gap: 0.55rem;
   font-size: 0.9rem;
   color: rgba(228, 241, 255, 0.85);
+}
+
+.habitat-grid__remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(183, 223, 255, 0.4);
+  background: rgba(10, 16, 34, 0.9);
+  color: rgba(228, 241, 255, 0.95);
+  font-size: 1.2rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.habitat-grid__remove:hover,
+.habitat-grid__remove:focus-visible {
+  border-color: rgba(255, 209, 102, 0.7);
+  background: rgba(42, 32, 20, 0.9);
+}
+
+.habitat-grid__remove:focus-visible {
+  outline: 2px solid rgba(255, 209, 102, 0.6);
+  outline-offset: 2px;
 }
 
 .habitat-grid__details p {

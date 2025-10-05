@@ -346,6 +346,25 @@ export const GameProvider = ({ children }) => {
     return createdInstance
   }, [applyResourceDelta, logEvent])
 
+  const removeModule = useCallback((instanceId) => {
+    let removedInstance = null
+
+    setModulesBuilt((prev) => {
+      const index = prev.findIndex((module) => module.instanceId === instanceId)
+      if (index === -1) {
+        removedInstance = null
+        return prev
+      }
+
+      const nextModules = prev.filter((module) => module.instanceId !== instanceId)
+      removedInstance = prev[index]
+      setDerivedState(deriveResourceState(nextModules))
+      return nextModules
+    })
+
+    return removedInstance
+  }, [])
+
   const startSimulation = useCallback(() => {
     setPhase('simulation')
     setOrbitalTime(0)
@@ -861,6 +880,7 @@ export const GameProvider = ({ children }) => {
     decreaseMorale,
     selectPlanet,
     addModule,
+    removeModule,
     startSimulation,
     resetGame,
     repairModule,
@@ -870,6 +890,7 @@ export const GameProvider = ({ children }) => {
     activeIncidents,
     activeMission,
     addModule,
+    removeModule,
     decreaseEnergy,
     decreaseMorale,
     decreaseOxygen,
