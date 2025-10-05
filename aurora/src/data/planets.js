@@ -123,7 +123,7 @@ const planets = [
     conditions: 'Requiere reservas amplias y una red de drones.',
     description: 'La órbita marciana abre acceso a recursos minerales pero exige autonomía y resiliencia.',
     unlocked: true,
-    position: { x: 35, y: 70 },
+    position: { x: 58, y: 70 },
     size: 34,
     tint: 'linear-gradient(135deg, #ff9060, #b1482c)',
     habitatSlots: 8,
