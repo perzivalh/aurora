@@ -496,7 +496,7 @@ const Game = ({ onExitToMenu }) => {
                         )}
                       </div>
                     </article>
-                  )}
+                  )
                 })
               )}
             </div>
