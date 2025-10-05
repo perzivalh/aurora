@@ -24,7 +24,9 @@ const buildIncidentMessages = (incidents) => {
   if (!incidents.length) {
     return []
   }
-  return incidents.map((incident) => `Incidente activo: ${incident.label} | Ciclos restantes ${incident.cyclesRemaining}.`)
+  return incidents.map(
+    (incident) => `Incidente activo: ${incident.label} | Ciclos restantes ${incident.cyclesRemaining}.`,
+  )
 }
 
 const AuroraAI = () => {
@@ -55,15 +57,15 @@ const AuroraAI = () => {
     }
 
     if (phase !== 'simulation') {
-      output.push('Construccion en curso. Prepara la base antes de iniciar la simulacion.')
+      output.push('Construcción en curso. Prepara la base antes de iniciar la simulación.')
       if (activeMission && activeMission.status === 'active') {
-        output.push(`Mision prioritaria: ${activeMission.description}`)
+        output.push(`Misión prioritaria: ${activeMission.description}`)
       }
       return output
     }
 
     if (gameOver) {
-      output.push('Fallo catastrofico detectado. Esperando reinicio de protocolos.')
+      output.push('Falla catastrófica detectada. En espera de reinicio de protocolo.')
       return output
     }
 
@@ -71,34 +73,34 @@ const AuroraAI = () => {
       output.push('Detecto fluctuaciones en los reactores solares.')
     }
     if (oxygen < 50) {
-      output.push('Los niveles de oxigeno descienden peligrosamente.')
+      output.push('Los niveles de oxígeno descienden a umbrales críticos.')
     }
     if (morale < 50) {
-      output.push('La tripulacion muestra signos de agotamiento.')
+      output.push('La tripulación muestra signos de agotamiento.')
     }
 
     if (output.length === 0) {
-      output.push('Todos los sistemas se mantienen dentro de parametros seguros.')
+      output.push('Todos los sistemas se mantienen dentro de parámetros seguros.')
     }
 
     if (pendingEvent) {
-      output.push(`Advertencia temprana: ${pendingEvent.event.label} en ${pendingEvent.leadTime} ciclo(s).`)
+      output.push(`Alerta temprana: ${pendingEvent.event.label} en ${pendingEvent.leadTime} ciclo(s).`)
     }
 
     const incidentMessages = buildIncidentMessages(activeIncidents)
     output.push(...incidentMessages)
 
     if (activeMission && activeMission.status === 'active') {
-      output.push(`Objetivo vigente: ${activeMission.description}`)
+      output.push(`Objetivo activo: ${activeMission.description}`)
     }
 
     if (eventLog.length) {
-      output.push(`Bitacora reciente: ${eventLog[0].message}`)
+      output.push(`Registro reciente: ${eventLog[0].message}`)
     }
 
     output.push(`Modificadores activos -> ${summariseModifiers(resourceModifiers)}`)
     if (synergySummary.active?.length) {
-      output.push('Los modulos cooperan mejor de lo esperado. Manteniendo sinergias activas.')
+      output.push('Los módulos cooperan mejor de lo previsto. Las sinergias siguen activas.')
     }
     output.push(`Progreso de supervivencia: ${orbitalTime}/${survivalTarget} ciclos`)
 
@@ -123,7 +125,7 @@ const AuroraAI = () => {
   return (
     <div className="aurora-ai">
       <div className="aurora-ai__header">
-        <span className="aurora-ai__title">Aurora // IA de supervision</span>
+        <span className="aurora-ai__title">Aurora // IA de Supervisión</span>
         <span className="aurora-ai__time">Tiempo orbital: {orbitalTime}</span>
         <span className="aurora-ai__context">
           Destino: {selectedPlanet ? selectedPlanet.name : 'Sin asignar'}

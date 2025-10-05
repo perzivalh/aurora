@@ -37,21 +37,21 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     <div className="planet-select planet-select--map">
       <header className="planet-select__header">
         <div>
-          <span className="planet-select__eyebrow">Fase de despliegue</span>
-          <h1>Selecciona tu entorno orbital</h1>
-          <p>Visualiza el sistema y elige dónde establecer la plataforma Aurora.</p>
+          <span className="planet-select__eyebrow">Deployment Phase</span>
+          <h1>Select your orbital environment</h1>
+          <p>Survey the system and choose where to deploy the Aurora platform.</p>
         </div>
         {onBack && (
           <button type="button" className="planet-select__back" onClick={onBack}>
-            Volver
+            Back
           </button>
         )}
       </header>
 
       <div className="planet-select__layout">
-        <div className="solar-map" role="listbox" aria-label="Seleccionar planeta">
+        <div className="solar-map" role="listbox" aria-label="Select planet">
           <div className="solar-map__sun">
-            <span>Sol</span>
+            <span>Sun</span>
           </div>
 
           {ORBIT_RADII.map((orbit) => (
@@ -97,7 +97,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
             <span
               className={`planet-info__badge ${activePlanet?.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'}`}
             >
-              {activePlanet?.unlocked ? 'Disponible' : 'Bloqueado'}
+              {activePlanet?.unlocked ? 'Available' : 'Locked'}
             </span>
           </div>
           <p>{activePlanet?.summary}</p>
@@ -112,7 +112,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               onClick={() => activePlanet && handleSelect(activePlanet)}
               disabled={!activePlanet?.unlocked}
             >
-              {activePlanet?.unlocked ? 'Confirmar órbita' : 'En desarrollo'}
+              {activePlanet?.unlocked ? 'Confirm orbit' : 'In development'}
             </button>
           </div>
         </aside>
