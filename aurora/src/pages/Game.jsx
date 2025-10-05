@@ -18,16 +18,16 @@ const MODULE_ICONS = {
 }
 
 const STATUS_META = {
-  operational: { label: 'Operativo', tone: 'stable', symbol: '??' },
-  damaged: { label: 'Danado', tone: 'warning', symbol: '??' },
-  lost: { label: 'Perdido', tone: 'critical', symbol: '??' },
+  operational: { label: 'Operational', tone: 'stable', symbol: '??' },
+  damaged: { label: 'Damaged', tone: 'warning', symbol: '??' },
+  lost: { label: 'Lost', tone: 'critical', symbol: '??' },
 }
 
 const formatEffects = (effects = {}) => {
   const labels = { energy: 'En', oxygen: 'Ox', morale: 'Mo' }
   const entries = Object.entries(effects).filter(([, value]) => value !== 0)
   if (!entries.length) {
-    return 'Sin efecto directo'
+    return 'No direct effect'
   }
   return entries
     .map(([key, value]) => {
@@ -169,7 +169,7 @@ const Game = ({ onExitToMenu }) => {
       setFeedback({
         id: `${module.id}-limit`,
         type: 'warning',
-        text: `Limite alcanzado para ${module.name}.`,
+        text: `Limit reached for ${module.name}.`,
       })
       triggerTone(180)
       return
@@ -184,7 +184,7 @@ const Game = ({ onExitToMenu }) => {
     setFeedback({
       id: created.instanceId,
       type: 'module',
-      text: `${created.name} desplegado. ${created.role}.`,
+      text: `${created.name} deployed. ${created.role}.`,
     })
     triggerTone(module.tone ?? 440)
   }
@@ -198,7 +198,7 @@ const Game = ({ onExitToMenu }) => {
     setFeedback({
       id: 'simulation-start',
       type: 'phase',
-      text: 'Simulacion iniciada. Aurora esta atenta a tus decisiones.',
+      text: 'Simulation started. Aurora is monitoring your decisions.',
     })
     triggerTone(320)
   }
@@ -209,8 +209,8 @@ const Game = ({ onExitToMenu }) => {
       id: `repair-${module.instanceId}`,
       type: success ? 'phase' : 'warning',
       text: success
-        ? `${module.name} estabilizado manualmente.`
-        : 'No hay recursos suficientes para reparar.',
+        ? `${module.name} manually stabilized.`
+        : 'Not enough resources to repair.',
     })
     triggerTone(success ? 560 : 200)
   }
@@ -221,8 +221,8 @@ const Game = ({ onExitToMenu }) => {
       id: `redirect-${module.instanceId}`,
       type: success ? 'info' : 'warning',
       text: success
-        ? `Energia redirigida a ${module.name}.`
-        : 'Energia insuficiente para redirigir.',
+        ? `Power rerouted to ${module.name}.`
+        : 'Insufficient energy to redirect.',
     })
     triggerTone(success ? 480 : 200)
   }
@@ -233,7 +233,7 @@ const Game = ({ onExitToMenu }) => {
       setFeedback({
         id: `ignore-${module.instanceId}`,
         type: 'warning',
-        text: `Ignorando el fallo de ${module.name}. Riesgo incrementado.`,
+        text: `Ignoring ${module.name}'s failure. Risk increased.`,
       })
       triggerTone(160)
     }
@@ -274,23 +274,23 @@ const Game = ({ onExitToMenu }) => {
     const statusClass = `mission-banner--${activeMission.status}`
     const cyclesInfo =
       typeof activeMission.cyclesRemaining === 'number'
-        ? `Ciclos restantes: ${Math.max(activeMission.cyclesRemaining, 0)}`
+        ? `Cycles remaining: ${Math.max(activeMission.cyclesRemaining, 0)}`
         : null
     const progressInfo =
       activeMission.id === 'oxygen-buffer' || activeMission.id === 'stabilize-energy'
-        ? `Progreso: ${activeMission.progress ?? 0}`
+        ? `Progress: ${activeMission.progress ?? 0}`
         : null
 
     return (
       <div className={`mission-banner ${statusClass}`}>
         <div>
-          <h3>Aurora // Mision</h3>
+          <h3>Aurora // Mission</h3>
           <p>{activeMission.description}</p>
         </div>
         <div className="mission-banner__meta">
           {cyclesInfo && <span>{cyclesInfo}</span>}
           {progressInfo && <span>{progressInfo}</span>}
-          <span>Estado: {activeMission.status}</span>
+          <span>Status: {activeMission.status}</span>
         </div>
       </div>
     )
@@ -303,32 +303,32 @@ const Game = ({ onExitToMenu }) => {
       <header className="game-screen__header">
         <div>
           <h1>Aurora // Your Home in Space</h1>
-          <p>Monitoreo de recursos criticos de la estacion.</p>
+          <p>Monitoring critical station resources.</p>
         </div>
         {selectedPlanet && (
-          <span className="game-screen__badge">Destino: {selectedPlanet.name}</span>
+          <span className="game-screen__badge">Destination: {selectedPlanet.name}</span>
         )}
         {onExitToMenu && (
           <button type="button" className="game-screen__back" onClick={handleExitToMenu}>
-            Menu principal
+            Main menu
           </button>
         )}
       </header>
 
       <main className="game-screen__main">
         <section className="game-screen__hud">
-          <ResourceBar label="Energia" value={energy} color="#ffd166" />
-          <ResourceBar label="Oxigeno" value={oxygen} color="#06d6a0" />
-          <ResourceBar label="Moral" value={morale} color="#118ab2" />
+          <ResourceBar label="Energy" value={energy} color="#ffd166" />
+          <ResourceBar label="Oxygen" value={oxygen} color="#06d6a0" />
+          <ResourceBar label="Morale" value={morale} color="#118ab2" />
         </section>
 
         <section className="game-screen__grid">
           <aside className="build-panel">
             <div className="build-panel__header">
-              <h2>Gestion de modulos</h2>
+              <h2>Module management</h2>
               <p>
-                Construye durante la fase de ensamblaje, luego coordina reparaciones bajo presion. Requiere al menos tres
-                modulos para iniciar la simulacion.
+                Build during the assembly phase, then coordinate repairs under pressure. At least three modules are required
+                to start the simulation.
               </p>
             </div>
 
@@ -336,9 +336,9 @@ const Game = ({ onExitToMenu }) => {
 
             {pendingEvent && (
               <div className="mission-banner mission-banner--warning">
-                <h3>Alerta temprana</h3>
+                <h3>Early alert</h3>
                 <p>
-                  Aurora predice: {pendingEvent.event.label} en {pendingEvent.leadTime} ciclo(s).
+                  Aurora predicts: {pendingEvent.event.label} in {pendingEvent.leadTime} cycle(s).
                 </p>
               </div>
             )}
@@ -369,8 +369,8 @@ const Game = ({ onExitToMenu }) => {
                     </div>
                     <div className="build-panel__option-details">
                       <p>{module.description}</p>
-                      <span className="build-panel__option-role">Rol: {module.role}</span>
-                      <span className="build-panel__effects">Efectos: {formatEffects(module.effects)}</span>
+                      <span className="build-panel__option-role">Role: {module.role}</span>
+                      <span className="build-panel__effects">Effects: {formatEffects(module.effects)}</span>
                     </div>
                   </button>
                 )
@@ -383,11 +383,11 @@ const Game = ({ onExitToMenu }) => {
               onClick={handleStartSimulation}
               disabled={!canStartSimulation}
             >
-              {simulationActive ? 'Simulacion en curso' : victoryAchieved ? 'Simulacion completada' : 'Iniciar Simulacion'}
+              {simulationActive ? 'Simulation in progress' : victoryAchieved ? 'Simulation complete' : 'Start simulation'}
             </button>
 
             <div className="build-panel__footer">
-              <span>Modulos desplegados: {modulesBuilt.length}/{totalModules}</span>
+              <span>Modules deployed: {modulesBuilt.length}/{totalModules}</span>
               <div className="build-panel__modifiers">
                 {modifierSummary.map((item) => (
                   <span key={item.label}>
@@ -396,14 +396,14 @@ const Game = ({ onExitToMenu }) => {
                 ))}
               </div>
               <span>
-                Objetivo: {Math.min(orbitalTime, survivalTarget)} / {survivalTarget} ciclos
+                Objective: {Math.min(orbitalTime, survivalTarget)} / {survivalTarget} cycles
               </span>
             </div>
 
             <div className="build-panel__synergies">
-              <h3>Sinergias activas</h3>
+              <h3>Active synergies</h3>
               {synergyList.length === 0 ? (
-                <p>Sin sinergias actuales.</p>
+                <p>No active synergies.</p>
               ) : (
                 <ul>
                   {synergyList.map((item) => (
@@ -424,11 +424,11 @@ const Game = ({ onExitToMenu }) => {
           </aside>
 
           <section className="game-screen__habitat">
-            <h2>Habitat Modular</h2>
+            <h2>Modular habitat</h2>
             <div className="habitat-grid">
               {modulesBuilt.length === 0 ? (
                 <div className="habitat-grid__empty">
-                  Selecciona un modulo para construir tu base inicial.
+                  Select a module to build your initial base.
                 </div>
               ) : (
                 modulesBuilt.map((module, index) => {
@@ -464,35 +464,35 @@ const Game = ({ onExitToMenu }) => {
                           )}
                         </div>
                         <p>{module.description}</p>
-                        <span className="habitat-grid__label">Rol principal</span>
+                        <span className="habitat-grid__label">Primary role</span>
                         <span className="habitat-grid__status">{module.role}</span>
                         <span className="habitat-grid__effects">{formatEffects(module.effects)}</span>
 
                         {incident && (
                           <div className="habitat-grid__incident">
                             <strong>{incident.label}</strong>
-                            <span>Ciclos restantes: {incident.cyclesRemaining}</span>
+                            <span>Cycles remaining: {incident.cyclesRemaining}</span>
                           </div>
                         )}
 
                         {module.status === 'damaged' && (
                           <div className="habitat-grid__actions">
                             <button type="button" onClick={() => handleRepair(module)}>
-                              Reparar (-10 En, -2 Mo)
+                              Repair (-10 En, -2 Mo)
                             </button>
                             <button type="button" onClick={() => handleRedirect(module)}>
-                              Redirigir energia (-5 En, -5 Mo)
+                              Redirect power (-5 En, -5 Mo)
                             </button>
                             <button type="button" onClick={() => handleIgnore(module)}>
-                              Ignorar
+                              Ignore
                             </button>
                           </div>
                         )}
 
                         {module.status === 'lost' && (
                           <div className="habitat-grid__incident habitat-grid__incident--lost">
-                            <strong>Fallo critico</strong>
-                            <span>Modulo inoperativo.</span>
+                            <strong>Critical failure</strong>
+                            <span>Module offline.</span>
                           </div>
                         )}
                       </div>
@@ -505,14 +505,14 @@ const Game = ({ onExitToMenu }) => {
         </section>
 
         <section className="event-feed">
-          <h2>Bitacora de Aurora</h2>
+          <h2>Aurora log</h2>
           <ul>
             {eventLog.slice(0, 6).map((entry) => (
               <li key={entry.id} className={`event-feed__item event-feed__item--${entry.tone}`}>
                 <span>{entry.message}</span>
               </li>
             ))}
-            {eventLog.length === 0 && <li className="event-feed__item">Sin eventos registrados.</li>}
+            {eventLog.length === 0 && <li className="event-feed__item">No events recorded.</li>}
           </ul>
         </section>
       </main>
@@ -522,10 +522,10 @@ const Game = ({ onExitToMenu }) => {
       {victoryAchieved && (
         <div className="game-over">
           <div className="game-over__content game-over__content--victory">
-            <h2>Habitat estabilizado</h2>
-            <p>Aurora mantiene equilibrio despues de {survivalTarget} ciclos orbitales. La tripulacion respira aliviada.</p>
+            <h2>Habitat stabilized</h2>
+            <p>Aurora holds equilibrium after {survivalTarget} orbital cycles. The crew finally exhales.</p>
             <button type="button" onClick={resetGame}>
-              Preparar nueva simulacion
+              Prepare new simulation
             </button>
           </div>
         </div>
@@ -535,9 +535,9 @@ const Game = ({ onExitToMenu }) => {
         <div className="game-over">
           <div className="game-over__content">
             <h2>Game Over</h2>
-            <p>Los sistemas criticos se han agotado. Restablece los protocolos.</p>
+            <p>Critical systems are depleted. Reinitialize protocols.</p>
             <button type="button" onClick={resetGame}>
-              Reiniciar Simulacion
+              Restart simulation
             </button>
           </div>
         </div>

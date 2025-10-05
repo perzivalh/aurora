@@ -24,7 +24,7 @@ const buildIncidentMessages = (incidents) => {
   if (!incidents.length) {
     return []
   }
-  return incidents.map((incident) => `Incidente activo: ${incident.label} | Ciclos restantes ${incident.cyclesRemaining}.`)
+  return incidents.map((incident) => `Active incident: ${incident.label} | Cycles remaining ${incident.cyclesRemaining}.`)
 }
 
 const AuroraAI = () => {
@@ -50,57 +50,57 @@ const AuroraAI = () => {
     const output = []
 
     if (victoryAchieved) {
-      output.push('Protocolos nominales. Aurora es autosuficiente. Preparando informe para la flota.')
+      output.push('Nominal protocols. Aurora is self-sustaining. Preparing a report for the fleet.')
       return output
     }
 
     if (phase !== 'simulation') {
-      output.push('Construccion en curso. Prepara la base antes de iniciar la simulacion.')
+      output.push('Construction in progress. Prepare the base before starting the simulation.')
       if (activeMission && activeMission.status === 'active') {
-        output.push(`Mision prioritaria: ${activeMission.description}`)
+        output.push(`Priority mission: ${activeMission.description}`)
       }
       return output
     }
 
     if (gameOver) {
-      output.push('Fallo catastrofico detectado. Esperando reinicio de protocolos.')
+      output.push('Catastrophic failure detected. Awaiting protocol reset.')
       return output
     }
 
     if (energy < 50) {
-      output.push('Detecto fluctuaciones en los reactores solares.')
+      output.push('Detecting fluctuations in the solar reactors.')
     }
     if (oxygen < 50) {
-      output.push('Los niveles de oxigeno descienden peligrosamente.')
+      output.push('Oxygen levels are dropping to critical thresholds.')
     }
     if (morale < 50) {
-      output.push('La tripulacion muestra signos de agotamiento.')
+      output.push('The crew is showing signs of exhaustion.')
     }
 
     if (output.length === 0) {
-      output.push('Todos los sistemas se mantienen dentro de parametros seguros.')
+      output.push('All systems remain within safe parameters.')
     }
 
     if (pendingEvent) {
-      output.push(`Advertencia temprana: ${pendingEvent.event.label} en ${pendingEvent.leadTime} ciclo(s).`)
+      output.push(`Early warning: ${pendingEvent.event.label} in ${pendingEvent.leadTime} cycle(s).`)
     }
 
     const incidentMessages = buildIncidentMessages(activeIncidents)
     output.push(...incidentMessages)
 
     if (activeMission && activeMission.status === 'active') {
-      output.push(`Objetivo vigente: ${activeMission.description}`)
+      output.push(`Active objective: ${activeMission.description}`)
     }
 
     if (eventLog.length) {
-      output.push(`Bitacora reciente: ${eventLog[0].message}`)
+      output.push(`Recent log: ${eventLog[0].message}`)
     }
 
-    output.push(`Modificadores activos -> ${summariseModifiers(resourceModifiers)}`)
+      output.push(`Active modifiers -> ${summariseModifiers(resourceModifiers)}`)
     if (synergySummary.active?.length) {
-      output.push('Los modulos cooperan mejor de lo esperado. Manteniendo sinergias activas.')
+      output.push('Modules are cooperating better than projected. Synergies remain active.')
     }
-    output.push(`Progreso de supervivencia: ${orbitalTime}/${survivalTarget} ciclos`)
+    output.push(`Survival progress: ${orbitalTime}/${survivalTarget} cycles`)
 
     return output
   }, [
@@ -123,10 +123,10 @@ const AuroraAI = () => {
   return (
     <div className="aurora-ai">
       <div className="aurora-ai__header">
-        <span className="aurora-ai__title">Aurora // IA de supervision</span>
-        <span className="aurora-ai__time">Tiempo orbital: {orbitalTime}</span>
+        <span className="aurora-ai__title">Aurora // Oversight AI</span>
+        <span className="aurora-ai__time">Orbital time: {orbitalTime}</span>
         <span className="aurora-ai__context">
-          Destino: {selectedPlanet ? selectedPlanet.name : 'Sin asignar'}
+          Destination: {selectedPlanet ? selectedPlanet.name : 'Unassigned'}
         </span>
       </div>
       <div className="aurora-ai__body">

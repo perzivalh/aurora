@@ -331,7 +331,7 @@ export const GameProvider = ({ children }) => {
           }
           const rewardDelta = applyMissionReward(prev.reward)
           applyResourceDelta(rewardDelta)
-          logEvent('Aurora confirma la ampliacion de soporte vital.', 'positive')
+          logEvent('Aurora confirms the life support expansion.', 'positive')
           return { ...prev, status: 'completed' }
         })
       }
@@ -352,7 +352,7 @@ export const GameProvider = ({ children }) => {
       const selected = pickWeightedRandom(candidates)
       if (selected) {
         setActiveMission(buildMissionState(selected))
-        logEvent(`Aurora asigna mision: ${selected.label}.`, 'info')
+        logEvent(`Aurora assigns mission: ${selected.label}.`, 'info')
       }
     }
   }, [logEvent])
@@ -368,8 +368,8 @@ export const GameProvider = ({ children }) => {
     }
     const missionState = buildMissionState(definition, { targetModuleId: moduleInstanceId })
     setActiveMission(missionState)
-    logEvent(`Aurora emite prioridad: ${definition.label}.`, 'warning')
-    logEvent(`Fallo detectado en ${moduleName}.`, 'warning')
+    logEvent(`Aurora issues priority: ${definition.label}.`, 'warning')
+    logEvent(`Failure detected in ${moduleName}.`, 'warning')
   }, [logEvent])
 
   const resolveMissionCompletion = useCallback((mission) => {
@@ -378,7 +378,7 @@ export const GameProvider = ({ children }) => {
     }
     const rewardDelta = applyMissionReward(mission.reward)
     applyResourceDelta(rewardDelta)
-    logEvent(`Mision completada: ${mission.label}.`, 'positive')
+    logEvent(`Mission completed: ${mission.label}.`, 'positive')
     setActiveMission({ ...mission, status: 'completed' })
   }, [applyResourceDelta, logEvent])
 
@@ -387,7 +387,7 @@ export const GameProvider = ({ children }) => {
       return
     }
     applyResourceDelta({ morale: -4 })
-    logEvent(`Mision fallida: ${mission.label}.`, 'critical')
+    logEvent(`Mission failed: ${mission.label}.`, 'critical')
     setActiveMission({ ...mission, status: 'failed' })
   }, [applyResourceDelta, logEvent])
 
@@ -399,7 +399,7 @@ export const GameProvider = ({ children }) => {
 
     const currentResources = resourcesRef.current
     if (currentResources.energy < Math.abs(REPAIR_COST.energy) || currentResources.morale < Math.abs(REPAIR_COST.morale)) {
-      logEvent('Recursos insuficientes para reparar el modulo.', 'warning')
+      logEvent('Insufficient resources to repair the module.', 'warning')
       return false
     }
 
@@ -423,7 +423,7 @@ export const GameProvider = ({ children }) => {
 
     setActiveIncidents((prev) => prev.filter((incident) => incident.moduleInstanceId !== instanceId))
 
-    logEvent(`Modulo ${moduleTarget.name} estabilizado manualmente.`, 'positive')
+    logEvent(`Module ${moduleTarget.name} manually stabilized.`, 'positive')
 
     setActiveMission((prev) => {
       if (!prev || prev.id !== 'repair-next-cycle' || prev.status !== 'active') {
@@ -446,7 +446,7 @@ export const GameProvider = ({ children }) => {
 
     const currentResources = resourcesRef.current
     if (currentResources.energy < Math.abs(REDIRECT_COST.energy) || currentResources.morale < Math.abs(REDIRECT_COST.morale)) {
-      logEvent('No hay energia extra para redirigir.', 'warning')
+      logEvent('No surplus energy available to redirect.', 'warning')
       return false
     }
 
@@ -469,7 +469,7 @@ export const GameProvider = ({ children }) => {
       return { ...module, stabilizedBuffer: (module.stabilizedBuffer ?? 0) + 1 }
     }))
 
-    logEvent(`Energia redirigida al modulo ${moduleTarget.name}.`, 'info')
+    logEvent(`Power rerouted to module ${moduleTarget.name}.`, 'info')
     return true
   }, [applyResourceDelta, logEvent])
 
@@ -497,7 +497,7 @@ export const GameProvider = ({ children }) => {
       return { ...module, damageCountdown: nextCountdown }
     }))
 
-    logEvent(`Ignorando el fallo de ${moduleTarget.name}. El riesgo aumenta.`, 'critical')
+    logEvent(`Ignoring ${moduleTarget.name}'s failure. Risk is increasing.`, 'critical')
     return true
   }, [logEvent])
 
@@ -524,7 +524,7 @@ export const GameProvider = ({ children }) => {
     })
 
     const updatedIncidents = incidents.filter((incident) => incident.moduleInstanceId !== damaged.instanceId)
-    logEvent(`Dron de mantenimiento estabiliza ${damaged.name}.`, 'positive')
+    logEvent(`Maintenance drone stabilizes ${damaged.name}.`, 'positive')
     return { modules: updatedModules, incidents: updatedIncidents, repaired: true }
   }, [logEvent])
 
@@ -650,7 +650,7 @@ export const GameProvider = ({ children }) => {
     if (pending) {
       if (pending.leadTime > 0) {
         pending.leadTime -= 1
-        predictedEventMessage = `Proximo evento detectado: ${pending.event.label}.`
+          predictedEventMessage = `Upcoming event detected: ${pending.event.label}.`
       } else {
         eventToApply = pending.event
         pending = null
@@ -669,7 +669,7 @@ export const GameProvider = ({ children }) => {
       if (selectedEvent) {
         if (synergySummary.earlyWarning && !pending) {
           pending = { event: selectedEvent, leadTime: synergySummary.earlyWarning }
-          predictedEventMessage = `Aurora predice: ${selectedEvent.label} en ${synergySummary.earlyWarning} ciclo(s).`
+          predictedEventMessage = `Aurora predicts: ${selectedEvent.label} in ${synergySummary.earlyWarning} cycle(s).`
         } else {
           eventToApply = selectedEvent
         }
@@ -694,7 +694,7 @@ export const GameProvider = ({ children }) => {
     const incidentDelta = incidentResolution.delta
 
     incidentResolution.lostModules.forEach((module) => {
-      logEvent(`Modulo ${module.name} se ha perdido. El vacio reclama su lugar.`, 'critical')
+      logEvent(`Module ${module.name} has been lost. The void reclaims the slot.`, 'critical')
     })
 
     let autoTicker = autoRepairTicker + 1
@@ -739,7 +739,7 @@ export const GameProvider = ({ children }) => {
     if (!gameOver && !victoryAchieved && orbitalTime + 1 >= SURVIVAL_TARGET_TICKS) {
       setVictoryAchieved(true)
       setPhase('victory')
-      logEvent('Aurora mantiene equilibrio. Has sobrevivido.', 'positive')
+      logEvent('Aurora holds equilibrium. You have survived.', 'positive')
     }
 
     const currentMission = missionRef.current
@@ -777,7 +777,7 @@ export const GameProvider = ({ children }) => {
     if (Object.values(resources).some((value) => value <= 0) && !gameOver) {
       setGameOver(true)
       setPhase('game-over')
-      logEvent('Sistemas criticos agotados. Aurora necesita reinicio.', 'critical')
+      logEvent('Critical systems depleted. Aurora requires a reboot.', 'critical')
     }
   }, [gameOver, logEvent, resources])
 
