@@ -445,6 +445,12 @@ button:active:not(:disabled) {
   gap: 0.75rem;
 }
 
+.build-panel__header h2 {
+  font-size: clamp(1.1rem, 1.5vw + 0.75rem, 1.6rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
 .build-panel__options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
