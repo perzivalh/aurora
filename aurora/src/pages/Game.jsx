@@ -431,7 +431,7 @@ const Game = ({ onExitToMenu }) => {
                   Selecciona un modulo para construir tu base inicial.
                 </div>
               ) : (
-                modulesBuilt.map((module) => {
+                modulesBuilt.map((module, index) => {
                   const descriptor = STATUS_META[module.status] ?? STATUS_META.operational
                   const incident = incidentByModule.get(module.instanceId)
                   const cardClassNames = [
@@ -450,6 +450,10 @@ const Game = ({ onExitToMenu }) => {
                           {resolveIcon(module.id)}
                         </span>
                         <span className="habitat-grid__name">{module.name}</span>
+                        <span className="habitat-grid__slot">Slot {index + 1}</span>
+                      </div>
+
+                      <div className="habitat-grid__details">
                         <div className={`module-status module-status--${descriptor.tone}`}>
                           <span className="module-status__symbol" aria-hidden="true">
                             {descriptor.symbol}
@@ -459,9 +463,6 @@ const Game = ({ onExitToMenu }) => {
                             <span className="module-status__timer">/{module.damageCountdown}</span>
                           )}
                         </div>
-                      </div>
-
-                      <div className="habitat-grid__details">
                         <p>{module.description}</p>
                         <span className="habitat-grid__label">Rol principal</span>
                         <span className="habitat-grid__status">{module.role}</span>
