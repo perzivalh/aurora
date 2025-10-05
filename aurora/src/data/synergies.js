@@ -1,9 +1,9 @@
 const synergyRules = [
   {
     id: 'energy-life-support-efficiency',
-    label: 'Optimized support grid',
+    label: 'Red de soporte optimizada',
     modules: ['energy', 'life-support'],
-    description: 'Energy management reduces overall consumption.',
+    description: 'La gestión energética reduce el consumo general.',
     effects: {
       decayMultiplier: 0.9,
     },
@@ -11,9 +11,9 @@ const synergyRules = [
   },
   {
     id: 'life-support-laboratory',
-    label: 'Applied bioengineering',
+    label: 'Bioingeniería aplicada',
     modules: ['life-support', 'laboratory'],
-    description: 'Analysis accelerates oxygen recovery.',
+    description: 'El análisis acelera la recuperación de oxígeno.',
     effects: {
       resourceBonus: { oxygen: 3 },
     },
@@ -21,9 +21,9 @@ const synergyRules = [
   },
   {
     id: 'energy-laboratory',
-    label: 'Predictive modeling',
+    label: 'Modelado predictivo',
     modules: ['energy', 'laboratory'],
-    description: 'Simulations reduce the probability of failure.',
+    description: 'Las simulaciones reducen la probabilidad de fallos.',
     effects: {
       eventRiskModifier: -0.1,
     },
@@ -31,9 +31,9 @@ const synergyRules = [
   },
   {
     id: 'crew-life-support',
-    label: 'Restored circadian cycles',
+    label: 'Ciclos circadianos restaurados',
     modules: ['crew', 'life-support'],
-    description: 'Morale climbs with clean air and rest.',
+    description: 'La moral aumenta con aire limpio y descanso.',
     effects: {
       resourceBonus: { morale: 3 },
     },
@@ -41,9 +41,9 @@ const synergyRules = [
   },
   {
     id: 'laboratory-comms',
-    label: 'Proactive probing',
+    label: 'Sondeo proactivo',
     modules: ['laboratory', 'comms'],
-    description: 'Detects events one cycle before they occur.',
+    description: 'Detecta eventos un ciclo antes de que ocurran.',
     effects: {
       earlyWarning: 1,
     },
@@ -51,9 +51,9 @@ const synergyRules = [
   },
   {
     id: 'maintenance-network',
-    label: 'Automated maintenance',
+    label: 'Mantenimiento automatizado',
     modules: ['maintenance'],
-    description: 'Automatic repair every few cycles.',
+    description: 'Reparación automática cada pocos ciclos.',
     effects: {
       autoRepairInterval: 4,
     },
@@ -61,9 +61,9 @@ const synergyRules = [
   },
   {
     id: 'control-center-boost',
-    label: 'Total coordination',
+    label: 'Coordinación total',
     modules: ['control-center'],
-    description: 'Boosts the efficiency of every positive synergy.',
+    description: 'Potencia la eficiencia de cada sinergia positiva.',
     effects: {
       synergyAmplifier: 0.1,
     },
@@ -71,9 +71,9 @@ const synergyRules = [
   },
   {
     id: 'energy-crew-noise',
-    label: 'Reactor noise',
+    label: 'Ruido de reactor',
     modules: ['energy', 'crew'],
-    description: 'Generators near crew quarters erode morale.',
+    description: 'Generadores cerca de la tripulación erosionan la moral.',
     effects: {
       resourcePenalty: { morale: 2 },
     },
@@ -81,9 +81,9 @@ const synergyRules = [
   },
   {
     id: 'experimental-risk',
-    label: 'Latent instability',
+    label: 'Inestabilidad latente',
     modules: ['experimental-reactor'],
-    description: 'The experimental reactor increases incident risk.',
+    description: 'El reactor experimental incrementa el riesgo de incidentes.',
     effects: {
       eventRiskModifier: 0.15,
       extraDamage: 1,

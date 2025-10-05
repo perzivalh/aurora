@@ -15,7 +15,7 @@ const ResourceBar = ({ label, value, color }) => {
       className="resource-bar"
       style={{ '--resource-color': color, '--resource-angle': `${progressAngle}deg` }}
     >
-      <div className="resource-bar__ring" role="img" aria-label={`${label} at ${percentageLabel}`}>
+      <div className="resource-bar__ring" role="img" aria-label={`${label} al ${percentageLabel}`}>
         <span className="resource-bar__value">{percentageLabel}</span>
       </div>
       <span className="resource-bar__label">{label}</span>

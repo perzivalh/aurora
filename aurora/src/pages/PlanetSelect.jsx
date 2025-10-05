@@ -35,9 +35,9 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     <div className={`planet-select planet-select--map${isFullscreen ? ' planet-select--fullscreen' : ''}`}>
       <header className="planet-select__header">
         <div>
-          <span className="planet-select__eyebrow">Deployment Phase</span>
-          <h1>Select your orbital environment</h1>
-          <p>Survey the system and choose where to deploy the Aurora platform.</p>
+          <span className="planet-select__eyebrow">Fase de despliegue</span>
+          <h1>Selecciona tu entorno orbital</h1>
+          <p>Explora el sistema y elige dónde desplegar la plataforma Aurora.</p>
         </div>
         <div className="planet-select__controls">
           <button
@@ -46,21 +46,21 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
             onClick={toggleFullscreen}
             aria-pressed={isFullscreen}
           >
-            {isFullscreen ? 'Close expanded view' : 'Expand view'}
+            {isFullscreen ? 'Cerrar vista ampliada' : 'Ampliar vista'}
           </button>
           {onBack && (
             <button type="button" className="planet-select__back" onClick={onBack}>
-              Back
+              Regresar
             </button>
           )}
         </div>
       </header>
 
       <div className="planet-select__layout">
-        <div className="solar-canvas" role="listbox" aria-label="Select planet">
+        <div className="solar-canvas" role="listbox" aria-label="Seleccionar planeta">
           <div className="solar-canvas__bg" />
           <div className="solar-canvas__sun" aria-hidden="true">
-            <span>Sun</span>
+            <span>Sol</span>
           </div>
 
           {planets.map((planet) => (
@@ -100,7 +100,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
                     selectedPlanet.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'
                   }`}
                 >
-                  {selectedPlanet.unlocked ? 'Available' : 'Locked'}
+                  {selectedPlanet.unlocked ? 'Disponible' : 'Bloqueado'}
                 </span>
               </div>
               <p>{selectedPlanet.summary}</p>
@@ -128,14 +128,14 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
                   onClick={() => handleConfirm(selectedPlanet)}
                   disabled={!selectedPlanet.unlocked}
                 >
-                  {selectedPlanet.unlocked ? 'Confirm orbit' : 'In development'}
+                  {selectedPlanet.unlocked ? 'Confirmar órbita' : 'En desarrollo'}
                 </button>
               </div>
             </>
           ) : (
             <div className="planet-info__empty">
-              <h2>Select a planet</h2>
-              <p>Explore the system to review details and confirm your destination.</p>
+              <h2>Selecciona un planeta</h2>
+              <p>Explora el sistema para revisar los detalles y confirmar tu destino.</p>
             </div>
           )}
         </aside>
@@ -144,7 +144,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
       {isFullscreen && selectedPlanet?.unlocked && (
         <div className="planet-select__floating-action">
           <button type="button" onClick={() => handleConfirm(selectedPlanet)}>
-            Confirm orbit at {selectedPlanet.name}
+            Confirmar órbita en {selectedPlanet.name}
           </button>
         </div>
       )}
