@@ -1,0 +1,83 @@
+.build-panel__option-summary {
+  z-index: 1;
+}
+
+.build-panel__option-details {
+  z-index: 2;
+}
+.build-panel__option {
+  position: relative;
+  width: 100%;
+  min-height: 110px;
+  padding: 0.85rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(164, 202, 254, 0.25);
+  background: rgba(13, 22, 49, 0.85);
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  transition: transform 200ms ease, border-color 200ms ease;
+  overflow: hidden;
+}
+.build-panel__option-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.build-panel__option-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.build-panel__option-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.build-panel__option-details {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 18, 38, 0.92);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.45rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  text-align: left;
+  z-index: 2;
+}
+
+.build-panel__option:hover .build-panel__option-details,
+.build-panel__option:focus-within .build-panel__option-details {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.build-panel__option-details p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(228, 241, 255, 0.8);
+}
+
+.build-panel__option-role {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(183, 255, 253, 0.65);
+}
+
+.build-panel__option:focus-visible {
+  outline: 2px solid rgba(84, 182, 255, 0.65);
+  outline-offset: 3px;
+}
