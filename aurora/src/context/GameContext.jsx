@@ -25,10 +25,21 @@ const BASE_DECAY = {
   morale: 1,
 }
 
+const DEFAULT_PLANET_PROFILE = {
+  habitatSlots: 10,
+  resourceBaseline: INITIAL_RESOURCES,
+  decayMultiplier: 1,
+  decayOffset: { energy: 0, oxygen: 0, morale: 0 },
+  eventChanceModifier: 0,
+  incidentRiskModifier: 0,
+  incidentSeverityModifier: 0,
+  eventWeightAdjustments: {},
+  environmentSummary: '',
+}
+
 const TICK_INTERVAL_MS = 5000
 const BASE_EVENT_CHANCE = 0.25
 const SURVIVAL_TARGET_TICKS = 12
-const MAX_HABITAT_SLOTS = 10
 const INCIDENT_LOSS_PENALTY = 1
 
 const REPAIR_COST = { energy: -10, morale: -2 }
@@ -82,6 +93,36 @@ const createModuleInstance = (module) => ({
   damageCountdown: null,
   stabilizedBuffer: 0,
 })
+
+const resolvePlanetProfile = (planet) => {
+  if (!planet) {
+    return {
+      ...DEFAULT_PLANET_PROFILE,
+      resourceBaseline: { ...INITIAL_RESOURCES },
+      decayOffset: { ...DEFAULT_PLANET_PROFILE.decayOffset },
+      eventWeightAdjustments: { ...DEFAULT_PLANET_PROFILE.eventWeightAdjustments },
+    }
+  }
+
+  const hazards = planet.hazards ?? {}
+  const decayOffset = {
+    energy: hazards.decayOffset?.energy ?? 0,
+    oxygen: hazards.decayOffset?.oxygen ?? 0,
+    morale: hazards.decayOffset?.morale ?? 0,
+  }
+
+  return {
+    habitatSlots: planet.habitatSlots ?? DEFAULT_PLANET_PROFILE.habitatSlots,
+    resourceBaseline: { ...INITIAL_RESOURCES, ...(planet.resourceBaseline ?? {}) },
+    decayMultiplier: hazards.decayMultiplier ?? DEFAULT_PLANET_PROFILE.decayMultiplier,
+    decayOffset,
+    eventChanceModifier: hazards.eventChanceModifier ?? DEFAULT_PLANET_PROFILE.eventChanceModifier,
+    incidentRiskModifier: hazards.incidentRiskModifier ?? DEFAULT_PLANET_PROFILE.incidentRiskModifier,
+    incidentSeverityModifier: hazards.incidentSeverityModifier ?? DEFAULT_PLANET_PROFILE.incidentSeverityModifier,
+    eventWeightAdjustments: { ...DEFAULT_PLANET_PROFILE.eventWeightAdjustments, ...(hazards.eventWeightAdjustments ?? {}) },
+    environmentSummary: planet.environmentSummary ?? DEFAULT_PLANET_PROFILE.environmentSummary,
+  }
+}
 
 const deriveModuleEffects = (modules) => {
   const modifier = { energy: 0, oxygen: 0, morale: 0 }
@@ -239,6 +280,25 @@ export const GameProvider = ({ children }) => {
   const missionRef = useRef(activeMission)
   const resourcesRef = useRef(resources)
 
+  const planetProfile = useMemo(() => resolvePlanetProfile(selectedPlanet), [selectedPlanet])
+
+  const planetEventDeck = useMemo(() => {
+    const adjustments = planetProfile.eventWeightAdjustments ?? {}
+    if (!adjustments || Object.keys(adjustments).length === 0) {
+      return eventDeck
+    }
+
+    return eventDeck.map((event) => {
+      const baseWeight = event.weight ?? 1
+      const multiplier = adjustments[event.id]
+      if (!multiplier || multiplier === 1) {
+        return event
+      }
+      const adjustedWeight = Math.max(0, baseWeight * multiplier)
+      return { ...event, weight: adjustedWeight }
+    })
+  }, [planetProfile.eventWeightAdjustments])
+
   useEffect(() => {
     modulesRef.current = modulesBuilt
   }, [modulesBuilt])
@@ -292,10 +352,12 @@ export const GameProvider = ({ children }) => {
   }, [])
 
   const selectPlanet = useCallback((planet) => {
+    const profile = resolvePlanetProfile(planet)
+
     setSelectedPlanet(planet)
     setModulesBuilt([])
     setPhase('construction')
-    setResources(() => ({ ...INITIAL_RESOURCES }))
+    setResources(() => ({ ...profile.resourceBaseline }))
     setOrbitalTime(0)
     setGameOver(false)
     setVictoryAchieved(false)
@@ -304,13 +366,30 @@ export const GameProvider = ({ children }) => {
     setDerivedState(deriveResourceState([]))
     setActiveMission(null)
     setAutoRepairTicker(0)
+
+    setEventLog(() => {
+      if (!planet) {
+        return []
+      }
+      const message = planet.environmentSummary
+        ? `Aurora calibrates for ${planet.name}. ${planet.environmentSummary}`
+        : `Aurora calibrates for ${planet.name}.`
+      return [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          message,
+          tone: 'info',
+          timestamp: Date.now(),
+        },
+      ]
+    })
   }, [])
 
   const addModule = useCallback((module) => {
     let createdInstance = null
 
     setModulesBuilt((prev) => {
-      if (prev.length >= MAX_HABITAT_SLOTS) {
+      if (prev.length >= planetProfile.habitatSlots) {
         createdInstance = null
         return prev
       }
@@ -344,7 +423,7 @@ export const GameProvider = ({ children }) => {
     }
 
     return createdInstance
-  }, [applyResourceDelta, logEvent])
+  }, [applyResourceDelta, logEvent, planetProfile.habitatSlots])
 
   const removeModule = useCallback((instanceId) => {
     let removedInstance = null
@@ -575,7 +654,10 @@ export const GameProvider = ({ children }) => {
 
     if (target) {
       const countdownBase = event.damage?.escalateAfter ?? 2
-      const countdown = Math.max(1, countdownBase - (synergy.extraDamage ?? 0))
+      const countdown = Math.max(
+        1,
+        countdownBase - (synergy.extraDamage ?? 0) - (planetProfile.incidentSeverityModifier ?? 0),
+      )
 
       updatedModules = updatedModules.map((module) => {
         if (module.instanceId !== target.instanceId) {
@@ -607,7 +689,7 @@ export const GameProvider = ({ children }) => {
     }
 
     return { modules: updatedModules, incidents: updatedIncidents, impactDelta }
-  }, [logEvent, scheduleRepairMission])
+  }, [logEvent, planetProfile.incidentSeverityModifier, scheduleRepairMission])
 
   const processIncidents = useCallback((modules, incidents) => {
     const delta = { energy: 0, oxygen: 0, morale: 0 }
@@ -683,14 +765,17 @@ export const GameProvider = ({ children }) => {
     }
 
     const lostModulesCount = modules.filter((module) => module.status === DAMAGE_STATES.lost).length
-    const totalRiskFromModules = modules.reduce((acc, module) => acc + (module.riskFactor ?? 0) * 0.05, 0)
+    const totalRiskFromModules =
+      modules.reduce((acc, module) => acc + (module.riskFactor ?? 0) * 0.05, 0) +
+      (planetProfile.incidentRiskModifier ?? 0)
+    const baseEventChance = BASE_EVENT_CHANCE + (planetProfile.eventChanceModifier ?? 0)
     const effectiveEventChance = Math.max(
       0,
-      Math.min(0.9, BASE_EVENT_CHANCE + synergySummary.eventRiskModifier + totalRiskFromModules),
+      Math.min(0.9, baseEventChance + synergySummary.eventRiskModifier + totalRiskFromModules),
     )
 
     if (!eventToApply && Math.random() < effectiveEventChance) {
-      const selectedEvent = pickWeightedRandom(eventDeck)
+      const selectedEvent = pickWeightedRandom(planetEventDeck)
       if (selectedEvent) {
         if (synergySummary.earlyWarning && !pending) {
           pending = { event: selectedEvent, leadTime: synergySummary.earlyWarning }
@@ -737,11 +822,16 @@ export const GameProvider = ({ children }) => {
     resourceModifiers = evaluation.resourceModifiers
     synergySummary = evaluation.synergySummary
 
-    const decayMultiplier = synergySummary.decayMultiplier ?? 1
+    const combinedDecayMultiplier = (synergySummary.decayMultiplier ?? 1) * (planetProfile.decayMultiplier ?? 1)
+    const decayBase = {
+      energy: BASE_DECAY.energy + (planetProfile.decayOffset.energy ?? 0),
+      oxygen: BASE_DECAY.oxygen + (planetProfile.decayOffset.oxygen ?? 0),
+      morale: BASE_DECAY.morale + (planetProfile.decayOffset.morale ?? 0),
+    }
     const decay = {
-      energy: BASE_DECAY.energy * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
-      oxygen: BASE_DECAY.oxygen * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
-      morale: BASE_DECAY.morale * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      energy: decayBase.energy * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      oxygen: decayBase.oxygen * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      morale: decayBase.morale * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
     }
 
     const totalDelta = { energy: 0, oxygen: 0, morale: 0 }
@@ -796,7 +886,26 @@ export const GameProvider = ({ children }) => {
         }
       }
     }
-  }, [applyEventToState, applyResourceDelta, attemptAutoRepair, autoRepairTicker, gameOver, logEvent, orbitalTime, processIncidents, resolveMissionCompletion, resolveMissionFailure, victoryAchieved])
+  }, [
+    applyEventToState,
+    applyResourceDelta,
+    attemptAutoRepair,
+    autoRepairTicker,
+    gameOver,
+    logEvent,
+    orbitalTime,
+    planetEventDeck,
+    planetProfile.decayMultiplier,
+    planetProfile.decayOffset.energy,
+    planetProfile.decayOffset.morale,
+    planetProfile.decayOffset.oxygen,
+    planetProfile.eventChanceModifier,
+    planetProfile.incidentRiskModifier,
+    processIncidents,
+    resolveMissionCompletion,
+    resolveMissionFailure,
+    victoryAchieved,
+  ])
 
   useEffect(() => {
     if (Object.values(resources).some((value) => value <= 0) && !gameOver) {
@@ -869,7 +978,8 @@ export const GameProvider = ({ children }) => {
     pendingEvent,
     victoryAchieved,
     survivalTarget: SURVIVAL_TARGET_TICKS,
-    maxHabitatSlots: MAX_HABITAT_SLOTS,
+    maxHabitatSlots: planetProfile.habitatSlots,
+    planetProfile,
     eventLog,
     activeMission,
     increaseEnergy,
@@ -891,6 +1001,7 @@ export const GameProvider = ({ children }) => {
     activeMission,
     addModule,
     removeModule,
+    planetProfile,
     decreaseEnergy,
     decreaseMorale,
     decreaseOxygen,

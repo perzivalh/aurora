@@ -79,6 +79,7 @@ const Game = ({ onExitToMenu }) => {
     redirectPower,
     ignoreDamage,
     maxHabitatSlots,
+    planetProfile,
   } = useGame()
 
   const [recentModuleId, setRecentModuleId] = useState(null)
@@ -352,12 +353,6 @@ const Game = ({ onExitToMenu }) => {
       </header>
 
       <main className="game-screen__main">
-        <section className="game-screen__hud">
-          <ResourceBar label="Energy" value={energy} color="#ffd166" />
-          <ResourceBar label="Oxygen" value={oxygen} color="#06d6a0" />
-          <ResourceBar label="Morale" value={morale} color="#118ab2" />
-        </section>
-
         <section className="game-screen__grid">
           <aside className="build-panel">
             <div className="build-panel__header">
@@ -367,6 +362,15 @@ const Game = ({ onExitToMenu }) => {
                 to start the simulation.
               </p>
             </div>
+
+            {selectedPlanet && (
+              <div className="build-panel__planet-meta">
+                <span className="build-panel__planet-capacity">Habitat capacity: {maxHabitatSlots} modules</span>
+                {planetProfile.environmentSummary && (
+                  <span className="build-panel__planet-hazard">{planetProfile.environmentSummary}</span>
+                )}
+              </div>
+            )}
 
             {missionBanner}
 
@@ -460,115 +464,125 @@ const Game = ({ onExitToMenu }) => {
             )}
           </aside>
 
-          <section className="game-screen__habitat">
-            <h2>Modular habitat</h2>
-            <div className="habitat-grid">
-              {modulesBuilt.length === 0 ? (
-                <div className="habitat-grid__empty">
-                  Select a module to build your initial base.
-                </div>
-              ) : (
-                modulesBuilt.map((module, index) => {
-                  const descriptor = STATUS_META[module.status] ?? STATUS_META.operational
-                  const incident = incidentByModule.get(module.instanceId)
-                  const cardClassNames = [
-                    'habitat-grid__module',
-                    module.instanceId === recentModuleId ? 'habitat-grid__module--recent' : '',
-                    `habitat-grid__module--${descriptor.tone}`,
-                    module.status === 'lost' ? 'habitat-grid__module--lost' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
+          <div className="game-screen__workspace">
+            <section className="game-screen__habitat">
+              <h2>Modular habitat</h2>
+              <div className="habitat-grid">
+                {modulesBuilt.length === 0 ? (
+                  <div className="habitat-grid__empty">
+                    Select a module to build your initial base.
+                  </div>
+                ) : (
+                  modulesBuilt.map((module, index) => {
+                    const descriptor = STATUS_META[module.status] ?? STATUS_META.operational
+                    const incident = incidentByModule.get(module.instanceId)
+                    const cardClassNames = [
+                      'habitat-grid__module',
+                      module.instanceId === recentModuleId ? 'habitat-grid__module--recent' : '',
+                      `habitat-grid__module--${descriptor.tone}`,
+                      module.status === 'lost' ? 'habitat-grid__module--lost' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')
 
-                  const editable = constructionPhase
-                  const moduleClassName = editable
-                    ? `${cardClassNames} habitat-grid__module--editable`
-                    : cardClassNames
+                    const editable = constructionPhase
+                    const moduleClassName = editable
+                      ? `${cardClassNames} habitat-grid__module--editable`
+                      : cardClassNames
 
-                  return (
-                    <article key={module.instanceId} className={moduleClassName} tabIndex={0}>
-                      {editable && (
-                        <button
-                          type="button"
-                          className="habitat-grid__remove"
-                          onClick={() => handleRemoveModule(module.instanceId)}
-                          aria-label={`Remove ${module.name}`}
-                        >
-                          ×
-                        </button>
-                      )}
-                      <div className="habitat-grid__summary">
-                        <span className="habitat-grid__icon" aria-hidden="true">
-                          {resolveIcon(module.id)}
-                        </span>
-                        <span className="habitat-grid__name">{module.name}</span>
-                        <span className="habitat-grid__slot">Slot {index + 1}</span>
-                      </div>
-
-                      <div className="habitat-grid__details">
-                        <div className={`module-status module-status--${descriptor.tone}`} aria-hidden="true">
-                          <span className="module-status__symbol" aria-hidden="true">
-                            {descriptor.symbol}
+                    return (
+                      <article key={module.instanceId} className={moduleClassName} tabIndex={0}>
+                        {editable && (
+                          <button
+                            type="button"
+                            className="habitat-grid__remove"
+                            onClick={() => handleRemoveModule(module.instanceId)}
+                            aria-label={`Remove ${module.name}`}
+                          >
+                            ×
+                          </button>
+                        )}
+                        <div className="habitat-grid__summary">
+                          <span className="habitat-grid__icon" aria-hidden="true">
+                            {resolveIcon(module.id)}
                           </span>
-                          <span>{descriptor.label}</span>
-                          {module.status === 'damaged' && module.damageCountdown != null && (
-                            <span className="module-status__timer">/{module.damageCountdown}</span>
+                          <span className="habitat-grid__name">{module.name}</span>
+                          <span className="habitat-grid__slot">Slot {index + 1}</span>
+                        </div>
+
+                        <div className="habitat-grid__details">
+                          <div className={`module-status module-status--${descriptor.tone}`} aria-hidden="true">
+                            <span className="module-status__symbol" aria-hidden="true">
+                              {descriptor.symbol}
+                            </span>
+                            <span>{descriptor.label}</span>
+                            {module.status === 'damaged' && module.damageCountdown != null && (
+                              <span className="module-status__timer">/{module.damageCountdown}</span>
+                            )}
+                          </div>
+                          <p>{module.description}</p>
+                          <span className="habitat-grid__label">Status</span>
+                          <span className="habitat-grid__status">{descriptor.label}</span>
+                          <span className="habitat-grid__label">Primary role</span>
+                          <span className="habitat-grid__status">{module.role}</span>
+                          <span className="habitat-grid__label">Effects</span>
+                          <span className="habitat-grid__effects">{formatEffects(module.effects)}</span>
+
+                          {incident && (
+                            <div className="habitat-grid__incident">
+                              <strong>{incident.label}</strong>
+                              <span>Cycles remaining: {incident.cyclesRemaining}</span>
+                            </div>
+                          )}
+
+                          {module.status === 'damaged' && (
+                            <div className="habitat-grid__actions">
+                              <button type="button" onClick={() => handleRepair(module)}>
+                                Repair (-10 En, -2 Mo)
+                              </button>
+                              <button type="button" onClick={() => handleRedirect(module)}>
+                                Redirect power (-5 En, -5 Mo)
+                              </button>
+                              <button type="button" onClick={() => handleIgnore(module)}>
+                                Ignore
+                              </button>
+                            </div>
+                          )}
+
+                          {module.status === 'lost' && (
+                            <div className="habitat-grid__incident habitat-grid__incident--lost">
+                              <strong>Critical failure</strong>
+                              <span>Module offline.</span>
+                            </div>
                           )}
                         </div>
-                        <p>{module.description}</p>
-                        <span className="habitat-grid__label">Status</span>
-                        <span className="habitat-grid__status">{descriptor.label}</span>
-                        <span className="habitat-grid__label">Primary role</span>
-                        <span className="habitat-grid__status">{module.role}</span>
-                        <span className="habitat-grid__label">Effects</span>
-                        <span className="habitat-grid__effects">{formatEffects(module.effects)}</span>
+                      </article>
+                    )
+                  })
+                )}
+              </div>
+            </section>
 
-                        {incident && (
-                          <div className="habitat-grid__incident">
-                            <strong>{incident.label}</strong>
-                            <span>Cycles remaining: {incident.cyclesRemaining}</span>
-                          </div>
-                        )}
+            <section className="game-screen__status-panel">
+              <div className="event-feed">
+                <h2>Aurora log</h2>
+                <ul>
+                  {eventLog.slice(0, 6).map((entry) => (
+                    <li key={entry.id} className={`event-feed__item event-feed__item--${entry.tone}`}>
+                      <span>{entry.message}</span>
+                    </li>
+                  ))}
+                  {eventLog.length === 0 && <li className="event-feed__item">No events recorded.</li>}
+                </ul>
+              </div>
 
-                        {module.status === 'damaged' && (
-                          <div className="habitat-grid__actions">
-                            <button type="button" onClick={() => handleRepair(module)}>
-                              Repair (-10 En, -2 Mo)
-                            </button>
-                            <button type="button" onClick={() => handleRedirect(module)}>
-                              Redirect power (-5 En, -5 Mo)
-                            </button>
-                            <button type="button" onClick={() => handleIgnore(module)}>
-                              Ignore
-                            </button>
-                          </div>
-                        )}
-
-                        {module.status === 'lost' && (
-                          <div className="habitat-grid__incident habitat-grid__incident--lost">
-                            <strong>Critical failure</strong>
-                            <span>Module offline.</span>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  )
-                })
-              )}
-            </div>
-          </section>
-        </section>
-
-        <section className="event-feed">
-          <h2>Aurora log</h2>
-          <ul>
-            {eventLog.slice(0, 6).map((entry) => (
-              <li key={entry.id} className={`event-feed__item event-feed__item--${entry.tone}`}>
-                <span>{entry.message}</span>
-              </li>
-            ))}
-            {eventLog.length === 0 && <li className="event-feed__item">No events recorded.</li>}
-          </ul>
+              <div className="status-panel__resources" aria-label="Station resources">
+                <ResourceBar label="Energy" value={energy} color="#ffd166" />
+                <ResourceBar label="Oxygen" value={oxygen} color="#06d6a0" />
+                <ResourceBar label="Morale" value={morale} color="#118ab2" />
+              </div>
+            </section>
+          </div>
         </section>
       </main>
 

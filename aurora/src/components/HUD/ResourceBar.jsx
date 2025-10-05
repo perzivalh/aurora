@@ -7,18 +7,18 @@ const clampPercentage = (value) => {
 const ResourceBar = ({ label, value, color }) => {
   const safeValue = clampPercentage(value)
 
+  const progressAngle = (safeValue / 100) * 360
+  const percentageLabel = `${Math.round(safeValue)}%`
+
   return (
-    <div className="resource-bar">
-      <div className="resource-bar__header">
-        <span className="resource-bar__label">{label}</span>
-        <span className="resource-bar__value">{Math.round(safeValue)}%</span>
+    <div
+      className="resource-bar"
+      style={{ '--resource-color': color, '--resource-angle': `${progressAngle}deg` }}
+    >
+      <div className="resource-bar__ring" role="img" aria-label={`${label} at ${percentageLabel}`}>
+        <span className="resource-bar__value">{percentageLabel}</span>
       </div>
-      <div className="resource-bar__track">
-        <div
-          className="resource-bar__fill"
-          style={{ width: `${safeValue}%`, backgroundColor: color }}
-        />
-      </div>
+      <span className="resource-bar__label">{label}</span>
     </div>
   )
 }

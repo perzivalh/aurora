@@ -105,6 +105,19 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               </div>
               <p>{selectedPlanet.summary}</p>
               <p className="planet-info__conditions">{selectedPlanet.conditions}</p>
+              {selectedPlanet.environmentSummary && (
+                <p className="planet-info__environment">{selectedPlanet.environmentSummary}</p>
+              )}
+              {selectedPlanet.traits?.length > 0 && (
+                <dl className="planet-info__traits">
+                  {selectedPlanet.traits.map((trait) => (
+                    <div key={`${selectedPlanet.id}-${trait.label}`} className="planet-info__trait">
+                      <dt>{trait.label}</dt>
+                      <dd>{trait.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
               {!selectedPlanet.unlocked && selectedPlanet.lockedMessage && (
                 <p className="planet-info__locked">{selectedPlanet.lockedMessage}</p>
               )}
