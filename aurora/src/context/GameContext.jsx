@@ -28,6 +28,7 @@ const BASE_DECAY = {
 const TICK_INTERVAL_MS = 5000
 const BASE_EVENT_CHANCE = 0.25
 const SURVIVAL_TARGET_TICKS = 12
+const MAX_HABITAT_SLOTS = 10
 const INCIDENT_LOSS_PENALTY = 1
 
 const REPAIR_COST = { energy: -10, morale: -2 }
@@ -309,6 +310,11 @@ export const GameProvider = ({ children }) => {
     let createdInstance = null
 
     setModulesBuilt((prev) => {
+      if (prev.length >= MAX_HABITAT_SLOTS) {
+        createdInstance = null
+        return prev
+      }
+
       const currentOfType = prev.filter((item) => item.id === module.id).length
       const limit = module.maxInstances ?? Infinity
       if (currentOfType >= limit) {
@@ -844,6 +850,7 @@ export const GameProvider = ({ children }) => {
     pendingEvent,
     victoryAchieved,
     survivalTarget: SURVIVAL_TARGET_TICKS,
+    maxHabitatSlots: MAX_HABITAT_SLOTS,
     eventLog,
     activeMission,
     increaseEnergy,

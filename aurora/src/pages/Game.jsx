@@ -18,9 +18,9 @@ const MODULE_ICONS = {
 }
 
 const STATUS_META = {
-  operational: { label: 'Operational', tone: 'stable', symbol: '??' },
-  damaged: { label: 'Damaged', tone: 'warning', symbol: '??' },
-  lost: { label: 'Lost', tone: 'critical', symbol: '??' },
+  operational: { label: 'Operational', tone: 'stable', symbol: '✔' },
+  damaged: { label: 'Damaged', tone: 'warning', symbol: '⚠' },
+  lost: { label: 'Lost', tone: 'critical', symbol: '✖' },
 }
 
 const formatEffects = (effects = {}) => {
@@ -77,9 +77,8 @@ const Game = ({ onExitToMenu }) => {
     repairModule,
     redirectPower,
     ignoreDamage,
+    maxHabitatSlots,
   } = useGame()
-
-  const totalModules = modulesCatalog.length
 
   const [recentModuleId, setRecentModuleId] = useState(null)
   const [feedback, setFeedback] = useState(null)
@@ -140,11 +139,14 @@ const Game = ({ onExitToMenu }) => {
     return map
   }, [activeIncidents])
 
-  const modifierSummary = useMemo(() => [
-    { label: 'Energia', value: resourceModifiers.energy ?? 0 },
-    { label: 'Oxigeno', value: resourceModifiers.oxygen ?? 0 },
-    { label: 'Moral', value: resourceModifiers.morale ?? 0 },
-  ], [resourceModifiers])
+  const modifierSummary = useMemo(
+    () => [
+      { label: 'Energy', value: resourceModifiers.energy ?? 0 },
+      { label: 'Oxygen', value: resourceModifiers.oxygen ?? 0 },
+      { label: 'Morale', value: resourceModifiers.morale ?? 0 },
+    ],
+    [resourceModifiers],
+  )
 
   const simulationActive = phase === 'simulation'
   const constructionPhase = phase === 'construction'
@@ -160,6 +162,16 @@ const Game = ({ onExitToMenu }) => {
 
   const handleAddModule = (module) => {
     if (!constructionPhase) {
+      return
+    }
+
+    if (modulesBuilt.length >= maxHabitatSlots) {
+      setFeedback({
+        id: 'habitat-capacity',
+        type: 'warning',
+        text: `Habitat capacity reached. Maximum of ${maxHabitatSlots} modules.`,
+      })
+      triggerTone(180)
       return
     }
 
@@ -348,7 +360,8 @@ const Game = ({ onExitToMenu }) => {
                 const currentCount = moduleCounts[module.id] ?? 0
                 const maxSlots = module.maxInstances ?? Number.POSITIVE_INFINITY
                 const limitLabel = module.maxInstances ?? '\u221e'
-                const canAdd = constructionPhase && currentCount < maxSlots
+                const capacityReached = modulesBuilt.length >= maxHabitatSlots
+                const canAdd = constructionPhase && currentCount < maxSlots && !capacityReached
 
                 return (
                   <button
@@ -387,7 +400,7 @@ const Game = ({ onExitToMenu }) => {
             </button>
 
             <div className="build-panel__footer">
-              <span>Modules deployed: {modulesBuilt.length}/{totalModules}</span>
+              <span>Modules deployed: {modulesBuilt.length}/{maxHabitatSlots}</span>
               <div className="build-panel__modifiers">
                 {modifierSummary.map((item) => (
                   <span key={item.label}>
@@ -454,7 +467,7 @@ const Game = ({ onExitToMenu }) => {
                       </div>
 
                       <div className="habitat-grid__details">
-                        <div className={`module-status module-status--${descriptor.tone}`}>
+                        <div className={`module-status module-status--${descriptor.tone}`} aria-hidden="true">
                           <span className="module-status__symbol" aria-hidden="true">
                             {descriptor.symbol}
                           </span>
@@ -464,8 +477,11 @@ const Game = ({ onExitToMenu }) => {
                           )}
                         </div>
                         <p>{module.description}</p>
+                        <span className="habitat-grid__label">Status</span>
+                        <span className="habitat-grid__status">{descriptor.label}</span>
                         <span className="habitat-grid__label">Primary role</span>
                         <span className="habitat-grid__status">{module.role}</span>
+                        <span className="habitat-grid__label">Effects</span>
                         <span className="habitat-grid__effects">{formatEffects(module.effects)}</span>
 
                         {incident && (
