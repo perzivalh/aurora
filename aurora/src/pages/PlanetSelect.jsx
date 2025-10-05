@@ -4,17 +4,34 @@ import { useGame } from '../context/GameContext.jsx'
 
 const PlanetSelect = ({ onConfirm, onBack }) => {
   const { selectPlanet } = useGame()
-  const firstUnlocked = planets.find((planet) => planet.unlocked) ?? planets[0]
-  const [selectedId, setSelectedId] = useState(firstUnlocked?.id)
+  const [selectedId, setSelectedId] = useState(null)
   const [hoveredId, setHoveredId] = useState(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const selectedPlanet = useMemo(() => {
+    if (!selectedId) {
+      return null
+    }
+    return planets.find((planet) => planet.id === selectedId) ?? null
+  }, [selectedId])
 
   const displayPlanet = useMemo(() => {
     const activeId = hoveredId ?? selectedId
-    return planets.find((planet) => planet.id === activeId) ?? planets[0]
+    if (!activeId) {
+      return null
+    }
+    return planets.find((planet) => planet.id === activeId) ?? null
   }, [hoveredId, selectedId])
 
-  const handleSelect = (planet) => {
+  const handleMarkerClick = (planet) => {
     if (!planet.unlocked) {
+      return
+    }
+    setSelectedId(planet.id)
+  }
+
+  const handleConfirm = (planet) => {
+    if (!planet?.unlocked) {
       return
     }
     setSelectedId(planet.id)
@@ -30,19 +47,33 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     setHoveredId(null)
   }
 
+  const toggleFullscreen = () => {
+    setIsFullscreen((value) => !value)
+  }
+
   return (
-    <div className="planet-select planet-select--map">
+    <div className={`planet-select planet-select--map${isFullscreen ? ' planet-select--fullscreen' : ''}`}>
       <header className="planet-select__header">
         <div>
           <span className="planet-select__eyebrow">Fase de despliegue</span>
           <h1>Selecciona tu entorno orbital</h1>
           <p>Visualiza el sistema y elige donde establecer la plataforma Aurora.</p>
         </div>
-        {onBack && (
-          <button type="button" className="planet-select__back" onClick={onBack}>
-            Volver
+        <div className="planet-select__controls">
+          <button
+            type="button"
+            className="planet-select__toggle"
+            onClick={toggleFullscreen}
+            aria-pressed={isFullscreen}
+          >
+            {isFullscreen ? 'Cerrar vista expandida' : 'Vista expandida'}
           </button>
-        )}
+          {onBack && (
+            <button type="button" className="planet-select__back" onClick={onBack}>
+              Volver
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="planet-select__layout">
@@ -72,7 +103,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               onFocus={() => handleHover(planet)}
               onMouseLeave={handleHoverEnd}
               onBlur={handleHoverEnd}
-              onClick={() => handleSelect(planet)}
+              onClick={() => handleMarkerClick(planet)}
               disabled={!planet.unlocked}
             >
               <span className="planet-marker__label" aria-hidden="true">
@@ -101,31 +132,50 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
         </div>
 
         <aside className="planet-info">
-          <div className="planet-info__header">
-            <h2>{displayPlanet?.name}</h2>
-            <span
-              className={`planet-info__badge ${displayPlanet?.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'}`}
-            >
-              {displayPlanet?.unlocked ? 'Disponible' : 'Bloqueado'}
-            </span>
-          </div>
-          <p>{displayPlanet?.summary}</p>
-          <p className="planet-info__conditions">{displayPlanet?.conditions}</p>
-          {!displayPlanet?.unlocked && displayPlanet?.lockedMessage && (
-            <p className="planet-info__locked">{displayPlanet.lockedMessage}</p>
-          )}
+          {displayPlanet ? (
+            <>
+              <div className="planet-info__header">
+                <h2>{displayPlanet.name}</h2>
+                <span
+                  className={`planet-info__badge ${
+                    displayPlanet.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'
+                  }`}
+                >
+                  {displayPlanet.unlocked ? 'Disponible' : 'Bloqueado'}
+                </span>
+              </div>
+              <p>{displayPlanet.summary}</p>
+              <p className="planet-info__conditions">{displayPlanet.conditions}</p>
+              {!displayPlanet.unlocked && displayPlanet.lockedMessage && (
+                <p className="planet-info__locked">{displayPlanet.lockedMessage}</p>
+              )}
 
-          <div className="planet-info__actions">
-            <button
-              type="button"
-              onClick={() => displayPlanet && handleSelect(displayPlanet)}
-              disabled={!displayPlanet?.unlocked}
-            >
-              {displayPlanet?.unlocked ? 'Confirmar orbita' : 'En desarrollo'}
-            </button>
-          </div>
+              <div className="planet-info__actions">
+                <button
+                  type="button"
+                  onClick={() => handleConfirm(displayPlanet)}
+                  disabled={!displayPlanet.unlocked}
+                >
+                  {displayPlanet.unlocked ? 'Confirmar orbita' : 'En desarrollo'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="planet-info__empty">
+              <h2>Selecciona un planeta</h2>
+              <p>Explora el sistema para ver su informacion y confirmar tu destino.</p>
+            </div>
+          )}
         </aside>
       </div>
+
+      {isFullscreen && selectedPlanet?.unlocked && (
+        <div className="planet-select__floating-action">
+          <button type="button" onClick={() => handleConfirm(selectedPlanet)}>
+            Confirmar orbita en {selectedPlanet.name}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

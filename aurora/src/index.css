@@ -139,6 +139,30 @@ button:active:not(:disabled) {
   justify-content: space-between;
 }
 
+.planet-select__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.planet-select__toggle {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(146, 196, 255, 0.35);
+  background: rgba(34, 57, 110, 0.35);
+  color: rgba(224, 242, 255, 0.9);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.planet-select__toggle:hover,
+.planet-select__toggle:focus-visible {
+  background: rgba(76, 117, 183, 0.35);
+  border-color: rgba(164, 202, 254, 0.65);
+  color: #f8fbff;
+}
+
 .planet-select__eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -168,6 +192,14 @@ button:active:not(:disabled) {
   }
 }
 
+.planet-select--fullscreen .planet-select__layout {
+  grid-template-columns: 1fr;
+}
+
+.planet-select--fullscreen .planet-info {
+  display: none;
+}
+
 .solar-canvas {
   position: relative;
   width: min(680px, 90vw);
@@ -176,6 +208,11 @@ button:active:not(:disabled) {
   border-radius: 1.5rem;
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(3, 15, 35, 0.55);
+}
+
+.planet-select--fullscreen .solar-canvas {
+  width: min(980px, 95vw);
+  aspect-ratio: 21 / 9;
 }
 
 .solar-canvas__bg {
@@ -221,14 +258,13 @@ button:active:not(:disabled) {
   border: 1px solid rgba(255, 255, 255, 0.35);
   display: grid;
   place-items: center;
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  transition: box-shadow 150ms ease, border-color 150ms ease, opacity 150ms ease;
   cursor: pointer;
 }
 
 .planet-marker:hover,
 .planet-marker:focus-visible,
 .planet-marker--active {
-  transform: translate(-50%, -50%) scale(1.12);
   box-shadow: 0 0 20px rgba(164, 202, 254, 0.35);
   border-color: rgba(255, 255, 255, 0.55);
 }
@@ -245,8 +281,8 @@ button:active:not(:disabled) {
 
 .planet-marker--locked:hover,
 .planet-marker--locked:focus-visible {
-  transform: translate(-50%, -50%);
   box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .planet-marker__label {
@@ -279,6 +315,45 @@ button:active:not(:disabled) {
   text-align: left;
   box-shadow: 0 15px 30px rgba(2, 12, 30, 0.45);
   pointer-events: none;
+}
+
+.planet-info__empty {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px dashed rgba(140, 176, 215, 0.35);
+  border-radius: 1rem;
+  background: rgba(10, 20, 45, 0.35);
+  text-align: left;
+}
+
+.planet-info__empty h2 {
+  font-size: 1.15rem;
+}
+
+.planet-select__floating-action {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(1.5rem, 5vw, 3rem);
+  transform: translateX(-50%);
+  z-index: 30;
+}
+
+.planet-select__floating-action button {
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #4f9cff, #846bff);
+  color: #f8fbff;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  box-shadow: 0 20px 35px rgba(36, 58, 120, 0.4);
+  cursor: pointer;
+}
+
+.planet-select__floating-action button:hover,
+.planet-select__floating-action button:focus-visible {
+  box-shadow: 0 28px 45px rgba(36, 58, 120, 0.55);
 }
 
 .planet-tooltip strong {
