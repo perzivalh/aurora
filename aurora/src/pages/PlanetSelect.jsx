@@ -5,7 +5,6 @@ import { useGame } from '../context/GameContext.jsx'
 const PlanetSelect = ({ onConfirm, onBack }) => {
   const { selectPlanet } = useGame()
   const [selectedId, setSelectedId] = useState(null)
-  const [hoveredId, setHoveredId] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const selectedPlanet = useMemo(() => {
@@ -15,18 +14,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     return planets.find((planet) => planet.id === selectedId) ?? null
   }, [selectedId])
 
-  const displayPlanet = useMemo(() => {
-    const activeId = hoveredId ?? selectedId
-    if (!activeId) {
-      return null
-    }
-    return planets.find((planet) => planet.id === activeId) ?? null
-  }, [hoveredId, selectedId])
-
   const handleMarkerClick = (planet) => {
-    if (!planet.unlocked) {
-      return
-    }
     setSelectedId(planet.id)
   }
 
@@ -37,14 +25,6 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     setSelectedId(planet.id)
     selectPlanet(planet)
     onConfirm?.()
-  }
-
-  const handleHover = (planet) => {
-    setHoveredId(planet.id)
-  }
-
-  const handleHoverEnd = () => {
-    setHoveredId(null)
   }
 
   const toggleFullscreen = () => {
@@ -90,7 +70,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               role="option"
               aria-selected={selectedId === planet.id}
               className={`planet-marker${planet.unlocked ? '' : ' planet-marker--locked'}${
-                displayPlanet?.id === planet.id ? ' planet-marker--active' : ''
+                selectedId === planet.id ? ' planet-marker--active' : ''
               }`}
               style={{
                 left: `${planet.position.x}%`,
@@ -99,10 +79,6 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
                 height: `${planet.size}px`,
                 background: planet.tint,
               }}
-              onMouseEnter={() => handleHover(planet)}
-              onFocus={() => handleHover(planet)}
-              onMouseLeave={handleHoverEnd}
-              onBlur={handleHoverEnd}
               onClick={() => handleMarkerClick(planet)}
               disabled={!planet.unlocked}
             >
@@ -112,51 +88,34 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               {!planet.unlocked && <span className="planet-marker__lock" aria-hidden="true">??</span>}
             </button>
           ))}
-
-          {displayPlanet && (
-            <div
-              className="planet-tooltip"
-              style={{
-                left: `${displayPlanet.position.x}%`,
-                top: `${displayPlanet.position.y}%`,
-              }}
-            >
-              <strong>{displayPlanet.name}</strong>
-              <span>{displayPlanet.summary}</span>
-              <small>{displayPlanet.conditions}</small>
-              {!displayPlanet.unlocked && displayPlanet.lockedMessage && (
-                <em>{displayPlanet.lockedMessage}</em>
-              )}
-            </div>
-          )}
         </div>
 
         <aside className="planet-info">
-          {displayPlanet ? (
+          {selectedPlanet ? (
             <>
               <div className="planet-info__header">
-                <h2>{displayPlanet.name}</h2>
+                <h2>{selectedPlanet.name}</h2>
                 <span
                   className={`planet-info__badge ${
-                    displayPlanet.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'
+                    selectedPlanet.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'
                   }`}
                 >
-                  {displayPlanet.unlocked ? 'Disponible' : 'Bloqueado'}
+                  {selectedPlanet.unlocked ? 'Disponible' : 'Bloqueado'}
                 </span>
               </div>
-              <p>{displayPlanet.summary}</p>
-              <p className="planet-info__conditions">{displayPlanet.conditions}</p>
-              {!displayPlanet.unlocked && displayPlanet.lockedMessage && (
-                <p className="planet-info__locked">{displayPlanet.lockedMessage}</p>
+              <p>{selectedPlanet.summary}</p>
+              <p className="planet-info__conditions">{selectedPlanet.conditions}</p>
+              {!selectedPlanet.unlocked && selectedPlanet.lockedMessage && (
+                <p className="planet-info__locked">{selectedPlanet.lockedMessage}</p>
               )}
 
               <div className="planet-info__actions">
                 <button
                   type="button"
-                  onClick={() => handleConfirm(displayPlanet)}
-                  disabled={!displayPlanet.unlocked}
+                  onClick={() => handleConfirm(selectedPlanet)}
+                  disabled={!selectedPlanet.unlocked}
                 >
-                  {displayPlanet.unlocked ? 'Confirmar orbita' : 'En desarrollo'}
+                  {selectedPlanet.unlocked ? 'Confirmar orbita' : 'En desarrollo'}
                 </button>
               </div>
             </>

@@ -262,6 +262,12 @@ button:active:not(:disabled) {
   cursor: pointer;
 }
 
+.planet-marker:hover:not(:disabled),
+.planet-marker:focus-visible,
+.planet-marker:active:not(:disabled) {
+  transform: translate(-50%, -50%);
+}
+
 .planet-marker:hover,
 .planet-marker:focus-visible,
 .planet-marker--active {
@@ -301,22 +307,6 @@ button:active:not(:disabled) {
   font-size: 0.65rem;
 }
 
-.planet-tooltip {
-  position: absolute;
-  transform: translate(-50%, calc(-50% - 3rem));
-  background: rgba(5, 11, 28, 0.92);
-  border: 1px solid rgba(164, 202, 254, 0.35);
-  border-radius: 0.75rem;
-  padding: 0.75rem 0.9rem;
-  display: grid;
-  gap: 0.35rem;
-  width: min(220px, 60vw);
-  font-size: 0.85rem;
-  text-align: left;
-  box-shadow: 0 15px 30px rgba(2, 12, 30, 0.45);
-  pointer-events: none;
-}
-
 .planet-info__empty {
   display: grid;
   gap: 0.75rem;
@@ -354,22 +344,6 @@ button:active:not(:disabled) {
 .planet-select__floating-action button:hover,
 .planet-select__floating-action button:focus-visible {
   box-shadow: 0 28px 45px rgba(36, 58, 120, 0.55);
-}
-
-.planet-tooltip strong {
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-}
-
-.planet-tooltip span,
-.planet-tooltip small,
-.planet-tooltip em {
-  color: rgba(228, 241, 255, 0.85);
-}
-
-.planet-tooltip em {
-  font-size: 0.75rem;
-  color: rgba(255, 209, 102, 0.75);
 }
 
 .planet-info {
