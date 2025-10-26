@@ -25,6 +25,18 @@ const BASE_DECAY = {
   morale: 1,
 }
 
+const DEFAULT_PLANET_PROFILE = {
+  habitatSlots: 10,
+  resourceBaseline: INITIAL_RESOURCES,
+  decayMultiplier: 1,
+  decayOffset: { energy: 0, oxygen: 0, morale: 0 },
+  eventChanceModifier: 0,
+  incidentRiskModifier: 0,
+  incidentSeverityModifier: 0,
+  eventWeightAdjustments: {},
+  environmentSummary: '',
+}
+
 const TICK_INTERVAL_MS = 5000
 const BASE_EVENT_CHANCE = 0.25
 const SURVIVAL_TARGET_TICKS = 12
@@ -81,6 +93,36 @@ const createModuleInstance = (module) => ({
   damageCountdown: null,
   stabilizedBuffer: 0,
 })
+
+const resolvePlanetProfile = (planet) => {
+  if (!planet) {
+    return {
+      ...DEFAULT_PLANET_PROFILE,
+      resourceBaseline: { ...INITIAL_RESOURCES },
+      decayOffset: { ...DEFAULT_PLANET_PROFILE.decayOffset },
+      eventWeightAdjustments: { ...DEFAULT_PLANET_PROFILE.eventWeightAdjustments },
+    }
+  }
+
+  const hazards = planet.hazards ?? {}
+  const decayOffset = {
+    energy: hazards.decayOffset?.energy ?? 0,
+    oxygen: hazards.decayOffset?.oxygen ?? 0,
+    morale: hazards.decayOffset?.morale ?? 0,
+  }
+
+  return {
+    habitatSlots: planet.habitatSlots ?? DEFAULT_PLANET_PROFILE.habitatSlots,
+    resourceBaseline: { ...INITIAL_RESOURCES, ...(planet.resourceBaseline ?? {}) },
+    decayMultiplier: hazards.decayMultiplier ?? DEFAULT_PLANET_PROFILE.decayMultiplier,
+    decayOffset,
+    eventChanceModifier: hazards.eventChanceModifier ?? DEFAULT_PLANET_PROFILE.eventChanceModifier,
+    incidentRiskModifier: hazards.incidentRiskModifier ?? DEFAULT_PLANET_PROFILE.incidentRiskModifier,
+    incidentSeverityModifier: hazards.incidentSeverityModifier ?? DEFAULT_PLANET_PROFILE.incidentSeverityModifier,
+    eventWeightAdjustments: { ...DEFAULT_PLANET_PROFILE.eventWeightAdjustments, ...(hazards.eventWeightAdjustments ?? {}) },
+    environmentSummary: planet.environmentSummary ?? DEFAULT_PLANET_PROFILE.environmentSummary,
+  }
+}
 
 const deriveModuleEffects = (modules) => {
   const modifier = { energy: 0, oxygen: 0, morale: 0 }
@@ -238,6 +280,25 @@ export const GameProvider = ({ children }) => {
   const missionRef = useRef(activeMission)
   const resourcesRef = useRef(resources)
 
+  const planetProfile = useMemo(() => resolvePlanetProfile(selectedPlanet), [selectedPlanet])
+
+  const planetEventDeck = useMemo(() => {
+    const adjustments = planetProfile.eventWeightAdjustments ?? {}
+    if (!adjustments || Object.keys(adjustments).length === 0) {
+      return eventDeck
+    }
+
+    return eventDeck.map((event) => {
+      const baseWeight = event.weight ?? 1
+      const multiplier = adjustments[event.id]
+      if (!multiplier || multiplier === 1) {
+        return event
+      }
+      const adjustedWeight = Math.max(0, baseWeight * multiplier)
+      return { ...event, weight: adjustedWeight }
+    })
+  }, [planetProfile.eventWeightAdjustments])
+
   useEffect(() => {
     modulesRef.current = modulesBuilt
   }, [modulesBuilt])
@@ -291,10 +352,12 @@ export const GameProvider = ({ children }) => {
   }, [])
 
   const selectPlanet = useCallback((planet) => {
+    const profile = resolvePlanetProfile(planet)
+
     setSelectedPlanet(planet)
     setModulesBuilt([])
     setPhase('construction')
-    setResources(() => ({ ...INITIAL_RESOURCES }))
+    setResources(() => ({ ...profile.resourceBaseline }))
     setOrbitalTime(0)
     setGameOver(false)
     setVictoryAchieved(false)
@@ -303,12 +366,34 @@ export const GameProvider = ({ children }) => {
     setDerivedState(deriveResourceState([]))
     setActiveMission(null)
     setAutoRepairTicker(0)
+
+    setEventLog(() => {
+      if (!planet) {
+        return []
+      }
+      const message = planet.environmentSummary
+        ? `Aurora calibra sistemas para ${planet.name}. ${planet.environmentSummary}`
+        : `Aurora calibra sistemas para ${planet.name}.`
+      return [
+        {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          message,
+          tone: 'info',
+          timestamp: Date.now(),
+        },
+      ]
+    })
   }, [])
 
   const addModule = useCallback((module) => {
     let createdInstance = null
 
     setModulesBuilt((prev) => {
+      if (prev.length >= planetProfile.habitatSlots) {
+        createdInstance = null
+        return prev
+      }
+
       const currentOfType = prev.filter((item) => item.id === module.id).length
       const limit = module.maxInstances ?? Infinity
       if (currentOfType >= limit) {
@@ -331,14 +416,33 @@ export const GameProvider = ({ children }) => {
           }
           const rewardDelta = applyMissionReward(prev.reward)
           applyResourceDelta(rewardDelta)
-          logEvent('Aurora confirma la ampliacion de soporte vital.', 'positive')
+          logEvent('Aurora confirma la expansión del soporte vital.', 'positive')
           return { ...prev, status: 'completed' }
         })
       }
     }
 
     return createdInstance
-  }, [applyResourceDelta, logEvent])
+  }, [applyResourceDelta, logEvent, planetProfile.habitatSlots])
+
+  const removeModule = useCallback((instanceId) => {
+    let removedInstance = null
+
+    setModulesBuilt((prev) => {
+      const index = prev.findIndex((module) => module.instanceId === instanceId)
+      if (index === -1) {
+        removedInstance = null
+        return prev
+      }
+
+      const nextModules = prev.filter((module) => module.instanceId !== instanceId)
+      removedInstance = prev[index]
+      setDerivedState(deriveResourceState(nextModules))
+      return nextModules
+    })
+
+    return removedInstance
+  }, [])
 
   const startSimulation = useCallback(() => {
     setPhase('simulation')
@@ -352,7 +456,7 @@ export const GameProvider = ({ children }) => {
       const selected = pickWeightedRandom(candidates)
       if (selected) {
         setActiveMission(buildMissionState(selected))
-        logEvent(`Aurora asigna mision: ${selected.label}.`, 'info')
+        logEvent(`Aurora asigna la misión: ${selected.label}.`, 'info')
       }
     }
   }, [logEvent])
@@ -369,7 +473,7 @@ export const GameProvider = ({ children }) => {
     const missionState = buildMissionState(definition, { targetModuleId: moduleInstanceId })
     setActiveMission(missionState)
     logEvent(`Aurora emite prioridad: ${definition.label}.`, 'warning')
-    logEvent(`Fallo detectado en ${moduleName}.`, 'warning')
+    logEvent(`Falla detectada en ${moduleName}.`, 'warning')
   }, [logEvent])
 
   const resolveMissionCompletion = useCallback((mission) => {
@@ -378,7 +482,7 @@ export const GameProvider = ({ children }) => {
     }
     const rewardDelta = applyMissionReward(mission.reward)
     applyResourceDelta(rewardDelta)
-    logEvent(`Mision completada: ${mission.label}.`, 'positive')
+    logEvent(`Misión completada: ${mission.label}.`, 'positive')
     setActiveMission({ ...mission, status: 'completed' })
   }, [applyResourceDelta, logEvent])
 
@@ -387,7 +491,7 @@ export const GameProvider = ({ children }) => {
       return
     }
     applyResourceDelta({ morale: -4 })
-    logEvent(`Mision fallida: ${mission.label}.`, 'critical')
+    logEvent(`Misión fallida: ${mission.label}.`, 'critical')
     setActiveMission({ ...mission, status: 'failed' })
   }, [applyResourceDelta, logEvent])
 
@@ -399,7 +503,7 @@ export const GameProvider = ({ children }) => {
 
     const currentResources = resourcesRef.current
     if (currentResources.energy < Math.abs(REPAIR_COST.energy) || currentResources.morale < Math.abs(REPAIR_COST.morale)) {
-      logEvent('Recursos insuficientes para reparar el modulo.', 'warning')
+      logEvent('Recursos insuficientes para reparar el módulo.', 'warning')
       return false
     }
 
@@ -423,7 +527,7 @@ export const GameProvider = ({ children }) => {
 
     setActiveIncidents((prev) => prev.filter((incident) => incident.moduleInstanceId !== instanceId))
 
-    logEvent(`Modulo ${moduleTarget.name} estabilizado manualmente.`, 'positive')
+    logEvent(`Módulo ${moduleTarget.name} estabilizado manualmente.`, 'positive')
 
     setActiveMission((prev) => {
       if (!prev || prev.id !== 'repair-next-cycle' || prev.status !== 'active') {
@@ -446,7 +550,7 @@ export const GameProvider = ({ children }) => {
 
     const currentResources = resourcesRef.current
     if (currentResources.energy < Math.abs(REDIRECT_COST.energy) || currentResources.morale < Math.abs(REDIRECT_COST.morale)) {
-      logEvent('No hay energia extra para redirigir.', 'warning')
+      logEvent('No hay energía sobrante para redirigir.', 'warning')
       return false
     }
 
@@ -469,7 +573,7 @@ export const GameProvider = ({ children }) => {
       return { ...module, stabilizedBuffer: (module.stabilizedBuffer ?? 0) + 1 }
     }))
 
-    logEvent(`Energia redirigida al modulo ${moduleTarget.name}.`, 'info')
+    logEvent(`Energía redirigida al módulo ${moduleTarget.name}.`, 'info')
     return true
   }, [applyResourceDelta, logEvent])
 
@@ -497,7 +601,7 @@ export const GameProvider = ({ children }) => {
       return { ...module, damageCountdown: nextCountdown }
     }))
 
-    logEvent(`Ignorando el fallo de ${moduleTarget.name}. El riesgo aumenta.`, 'critical')
+    logEvent(`Ignorando la falla de ${moduleTarget.name}. El riesgo aumenta.`, 'critical')
     return true
   }, [logEvent])
 
@@ -550,7 +654,10 @@ export const GameProvider = ({ children }) => {
 
     if (target) {
       const countdownBase = event.damage?.escalateAfter ?? 2
-      const countdown = Math.max(1, countdownBase - (synergy.extraDamage ?? 0))
+      const countdown = Math.max(
+        1,
+        countdownBase - (synergy.extraDamage ?? 0) - (planetProfile.incidentSeverityModifier ?? 0),
+      )
 
       updatedModules = updatedModules.map((module) => {
         if (module.instanceId !== target.instanceId) {
@@ -582,7 +689,7 @@ export const GameProvider = ({ children }) => {
     }
 
     return { modules: updatedModules, incidents: updatedIncidents, impactDelta }
-  }, [logEvent, scheduleRepairMission])
+  }, [logEvent, planetProfile.incidentSeverityModifier, scheduleRepairMission])
 
   const processIncidents = useCallback((modules, incidents) => {
     const delta = { energy: 0, oxygen: 0, morale: 0 }
@@ -650,7 +757,7 @@ export const GameProvider = ({ children }) => {
     if (pending) {
       if (pending.leadTime > 0) {
         pending.leadTime -= 1
-        predictedEventMessage = `Proximo evento detectado: ${pending.event.label}.`
+        predictedEventMessage = `Evento próximo detectado: ${pending.event.label}.`
       } else {
         eventToApply = pending.event
         pending = null
@@ -658,14 +765,17 @@ export const GameProvider = ({ children }) => {
     }
 
     const lostModulesCount = modules.filter((module) => module.status === DAMAGE_STATES.lost).length
-    const totalRiskFromModules = modules.reduce((acc, module) => acc + (module.riskFactor ?? 0) * 0.05, 0)
+    const totalRiskFromModules =
+      modules.reduce((acc, module) => acc + (module.riskFactor ?? 0) * 0.05, 0) +
+      (planetProfile.incidentRiskModifier ?? 0)
+    const baseEventChance = BASE_EVENT_CHANCE + (planetProfile.eventChanceModifier ?? 0)
     const effectiveEventChance = Math.max(
       0,
-      Math.min(0.9, BASE_EVENT_CHANCE + synergySummary.eventRiskModifier + totalRiskFromModules),
+      Math.min(0.9, baseEventChance + synergySummary.eventRiskModifier + totalRiskFromModules),
     )
 
     if (!eventToApply && Math.random() < effectiveEventChance) {
-      const selectedEvent = pickWeightedRandom(eventDeck)
+      const selectedEvent = pickWeightedRandom(planetEventDeck)
       if (selectedEvent) {
         if (synergySummary.earlyWarning && !pending) {
           pending = { event: selectedEvent, leadTime: synergySummary.earlyWarning }
@@ -694,7 +804,7 @@ export const GameProvider = ({ children }) => {
     const incidentDelta = incidentResolution.delta
 
     incidentResolution.lostModules.forEach((module) => {
-      logEvent(`Modulo ${module.name} se ha perdido. El vacio reclama su lugar.`, 'critical')
+      logEvent(`El módulo ${module.name} se ha perdido. El vacío reclama el espacio.`, 'critical')
     })
 
     let autoTicker = autoRepairTicker + 1
@@ -712,11 +822,16 @@ export const GameProvider = ({ children }) => {
     resourceModifiers = evaluation.resourceModifiers
     synergySummary = evaluation.synergySummary
 
-    const decayMultiplier = synergySummary.decayMultiplier ?? 1
+    const combinedDecayMultiplier = (synergySummary.decayMultiplier ?? 1) * (planetProfile.decayMultiplier ?? 1)
+    const decayBase = {
+      energy: BASE_DECAY.energy + (planetProfile.decayOffset.energy ?? 0),
+      oxygen: BASE_DECAY.oxygen + (planetProfile.decayOffset.oxygen ?? 0),
+      morale: BASE_DECAY.morale + (planetProfile.decayOffset.morale ?? 0),
+    }
     const decay = {
-      energy: BASE_DECAY.energy * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
-      oxygen: BASE_DECAY.oxygen * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
-      morale: BASE_DECAY.morale * decayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      energy: decayBase.energy * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      oxygen: decayBase.oxygen * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
+      morale: decayBase.morale * combinedDecayMultiplier + INCIDENT_LOSS_PENALTY * lostModulesCount,
     }
 
     const totalDelta = { energy: 0, oxygen: 0, morale: 0 }
@@ -739,7 +854,7 @@ export const GameProvider = ({ children }) => {
     if (!gameOver && !victoryAchieved && orbitalTime + 1 >= SURVIVAL_TARGET_TICKS) {
       setVictoryAchieved(true)
       setPhase('victory')
-      logEvent('Aurora mantiene equilibrio. Has sobrevivido.', 'positive')
+      logEvent('Aurora mantiene el equilibrio. Has sobrevivido.', 'positive')
     }
 
     const currentMission = missionRef.current
@@ -771,13 +886,32 @@ export const GameProvider = ({ children }) => {
         }
       }
     }
-  }, [applyEventToState, applyResourceDelta, attemptAutoRepair, autoRepairTicker, gameOver, logEvent, orbitalTime, processIncidents, resolveMissionCompletion, resolveMissionFailure, victoryAchieved])
+  }, [
+    applyEventToState,
+    applyResourceDelta,
+    attemptAutoRepair,
+    autoRepairTicker,
+    gameOver,
+    logEvent,
+    orbitalTime,
+    planetEventDeck,
+    planetProfile.decayMultiplier,
+    planetProfile.decayOffset.energy,
+    planetProfile.decayOffset.morale,
+    planetProfile.decayOffset.oxygen,
+    planetProfile.eventChanceModifier,
+    planetProfile.incidentRiskModifier,
+    processIncidents,
+    resolveMissionCompletion,
+    resolveMissionFailure,
+    victoryAchieved,
+  ])
 
   useEffect(() => {
     if (Object.values(resources).some((value) => value <= 0) && !gameOver) {
       setGameOver(true)
       setPhase('game-over')
-      logEvent('Sistemas criticos agotados. Aurora necesita reinicio.', 'critical')
+      logEvent('Los sistemas críticos se han agotado. Aurora necesita reiniciarse.', 'critical')
     }
   }, [gameOver, logEvent, resources])
 
@@ -844,6 +978,8 @@ export const GameProvider = ({ children }) => {
     pendingEvent,
     victoryAchieved,
     survivalTarget: SURVIVAL_TARGET_TICKS,
+    maxHabitatSlots: planetProfile.habitatSlots,
+    planetProfile,
     eventLog,
     activeMission,
     increaseEnergy,
@@ -854,6 +990,7 @@ export const GameProvider = ({ children }) => {
     decreaseMorale,
     selectPlanet,
     addModule,
+    removeModule,
     startSimulation,
     resetGame,
     repairModule,
@@ -863,6 +1000,8 @@ export const GameProvider = ({ children }) => {
     activeIncidents,
     activeMission,
     addModule,
+    removeModule,
+    planetProfile,
     decreaseEnergy,
     decreaseMorale,
     decreaseOxygen,
@@ -897,7 +1036,7 @@ export const GameProvider = ({ children }) => {
 export const useGame = () => {
   const context = useContext(GameContext)
   if (!context) {
-    throw new Error('useGame must be used within a GameProvider')
+    throw new Error('useGame debe utilizarse dentro de un GameProvider')
   }
   return context
 }

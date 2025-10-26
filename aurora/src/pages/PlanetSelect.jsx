@@ -4,17 +4,22 @@ import { useGame } from '../context/GameContext.jsx'
 
 const PlanetSelect = ({ onConfirm, onBack }) => {
   const { selectPlanet } = useGame()
-  const firstUnlocked = planets.find((planet) => planet.unlocked) ?? planets[0]
-  const [selectedId, setSelectedId] = useState(firstUnlocked?.id)
-  const [hoveredId, setHoveredId] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const displayPlanet = useMemo(() => {
-    const activeId = hoveredId ?? selectedId
-    return planets.find((planet) => planet.id === activeId) ?? planets[0]
-  }, [hoveredId, selectedId])
+  const selectedPlanet = useMemo(() => {
+    if (!selectedId) {
+      return null
+    }
+    return planets.find((planet) => planet.id === selectedId) ?? null
+  }, [selectedId])
 
-  const handleSelect = (planet) => {
-    if (!planet.unlocked) {
+  const handleMarkerClick = (planet) => {
+    setSelectedId(planet.id)
+  }
+
+  const handleConfirm = (planet) => {
+    if (!planet?.unlocked) {
       return
     }
     setSelectedId(planet.id)
@@ -22,27 +27,33 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
     onConfirm?.()
   }
 
-  const handleHover = (planet) => {
-    setHoveredId(planet.id)
-  }
-
-  const handleHoverEnd = () => {
-    setHoveredId(null)
+  const toggleFullscreen = () => {
+    setIsFullscreen((value) => !value)
   }
 
   return (
-    <div className="planet-select planet-select--map">
+    <div className={`planet-select planet-select--map${isFullscreen ? ' planet-select--fullscreen' : ''}`}>
       <header className="planet-select__header">
         <div>
           <span className="planet-select__eyebrow">Fase de despliegue</span>
           <h1>Selecciona tu entorno orbital</h1>
-          <p>Visualiza el sistema y elige donde establecer la plataforma Aurora.</p>
+          <p>Explora el sistema y elige dónde desplegar la plataforma Aurora.</p>
         </div>
-        {onBack && (
-          <button type="button" className="planet-select__back" onClick={onBack}>
-            Volver
+        <div className="planet-select__controls">
+          <button
+            type="button"
+            className="planet-select__toggle"
+            onClick={toggleFullscreen}
+            aria-pressed={isFullscreen}
+          >
+            {isFullscreen ? 'Cerrar vista ampliada' : 'Ampliar vista'}
           </button>
-        )}
+          {onBack && (
+            <button type="button" className="planet-select__back" onClick={onBack}>
+              Regresar
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="planet-select__layout">
@@ -59,7 +70,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               role="option"
               aria-selected={selectedId === planet.id}
               className={`planet-marker${planet.unlocked ? '' : ' planet-marker--locked'}${
-                displayPlanet?.id === planet.id ? ' planet-marker--active' : ''
+                selectedId === planet.id ? ' planet-marker--active' : ''
               }`}
               style={{
                 left: `${planet.position.x}%`,
@@ -68,11 +79,7 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
                 height: `${planet.size}px`,
                 background: planet.tint,
               }}
-              onMouseEnter={() => handleHover(planet)}
-              onFocus={() => handleHover(planet)}
-              onMouseLeave={handleHoverEnd}
-              onBlur={handleHoverEnd}
-              onClick={() => handleSelect(planet)}
+              onClick={() => handleMarkerClick(planet)}
               disabled={!planet.unlocked}
             >
               <span className="planet-marker__label" aria-hidden="true">
@@ -81,51 +88,66 @@ const PlanetSelect = ({ onConfirm, onBack }) => {
               {!planet.unlocked && <span className="planet-marker__lock" aria-hidden="true">??</span>}
             </button>
           ))}
-
-          {displayPlanet && (
-            <div
-              className="planet-tooltip"
-              style={{
-                left: `${displayPlanet.position.x}%`,
-                top: `${displayPlanet.position.y}%`,
-              }}
-            >
-              <strong>{displayPlanet.name}</strong>
-              <span>{displayPlanet.summary}</span>
-              <small>{displayPlanet.conditions}</small>
-              {!displayPlanet.unlocked && displayPlanet.lockedMessage && (
-                <em>{displayPlanet.lockedMessage}</em>
-              )}
-            </div>
-          )}
         </div>
 
         <aside className="planet-info">
-          <div className="planet-info__header">
-            <h2>{displayPlanet?.name}</h2>
-            <span
-              className={`planet-info__badge ${displayPlanet?.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'}`}
-            >
-              {displayPlanet?.unlocked ? 'Disponible' : 'Bloqueado'}
-            </span>
-          </div>
-          <p>{displayPlanet?.summary}</p>
-          <p className="planet-info__conditions">{displayPlanet?.conditions}</p>
-          {!displayPlanet?.unlocked && displayPlanet?.lockedMessage && (
-            <p className="planet-info__locked">{displayPlanet.lockedMessage}</p>
-          )}
+          {selectedPlanet ? (
+            <>
+              <div className="planet-info__header">
+                <h2>{selectedPlanet.name}</h2>
+                <span
+                  className={`planet-info__badge ${
+                    selectedPlanet.unlocked ? 'planet-info__badge--ready' : 'planet-info__badge--locked'
+                  }`}
+                >
+                  {selectedPlanet.unlocked ? 'Disponible' : 'Bloqueado'}
+                </span>
+              </div>
+              <p>{selectedPlanet.summary}</p>
+              <p className="planet-info__conditions">{selectedPlanet.conditions}</p>
+              {selectedPlanet.environmentSummary && (
+                <p className="planet-info__environment">{selectedPlanet.environmentSummary}</p>
+              )}
+              {selectedPlanet.traits?.length > 0 && (
+                <dl className="planet-info__traits">
+                  {selectedPlanet.traits.map((trait) => (
+                    <div key={`${selectedPlanet.id}-${trait.label}`} className="planet-info__trait">
+                      <dt>{trait.label}</dt>
+                      <dd>{trait.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {!selectedPlanet.unlocked && selectedPlanet.lockedMessage && (
+                <p className="planet-info__locked">{selectedPlanet.lockedMessage}</p>
+              )}
 
-          <div className="planet-info__actions">
-            <button
-              type="button"
-              onClick={() => displayPlanet && handleSelect(displayPlanet)}
-              disabled={!displayPlanet?.unlocked}
-            >
-              {displayPlanet?.unlocked ? 'Confirmar orbita' : 'En desarrollo'}
-            </button>
-          </div>
+              <div className="planet-info__actions">
+                <button
+                  type="button"
+                  onClick={() => handleConfirm(selectedPlanet)}
+                  disabled={!selectedPlanet.unlocked}
+                >
+                  {selectedPlanet.unlocked ? 'Confirmar órbita' : 'En desarrollo'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="planet-info__empty">
+              <h2>Selecciona un planeta</h2>
+              <p>Explora el sistema para revisar los detalles y confirmar tu destino.</p>
+            </div>
+          )}
         </aside>
       </div>
+
+      {isFullscreen && selectedPlanet?.unlocked && (
+        <div className="planet-select__floating-action">
+          <button type="button" onClick={() => handleConfirm(selectedPlanet)}>
+            Confirmar órbita en {selectedPlanet.name}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
